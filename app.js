@@ -11,6 +11,15 @@ const recordButton = document.getElementById("record-decision");
 const reasonInput = document.getElementById("override-reason");
 const feedback = document.getElementById("decision-feedback");
 
+const interviewExamples = {
+  "HH-0148": { note: "The interviewee describes renting a room month to month. They say essential needs are generally met at present, but they have little room in the budget for unexpected costs.", moments: [["00:34", "I rent the room one month at a time and do not know what will happen after that.", "HOUSING UNCERTAINTY"], ["01:11", "Most weeks I can manage food, but there is not much left for an emergency.", "BUDGET PRESSURE"]] },
+  "HH-0152": { note: "The interviewee reports that access to food and hygiene items can become difficult toward the end of the month. They mention relying on occasional help from relatives.", moments: [["00:28", "My relatives help when they can, but I try not to ask too often.", "SUPPORT NETWORK"], ["01:06", "Near the end of the month I sometimes have to choose what to buy first.", "BASIC NEEDS"]] },
+  "HH-0156": { note: "The respondent describes balancing housing and food costs for the household. A relative can sometimes help with childcare, though that support is not always available.", moments: [["00:42", "When rent is due, there is less left for other things.", "HOUSEHOLD COSTS"], ["01:19", "My relative can watch the children sometimes, but not every week.", "CARE SUPPORT"]] },
+  "HH-0160": { note: "The interviewee says their current accommodation is temporary. They report occasional difficulty covering basic expenses and have limited savings for an unexpected change.", moments: [["00:31", "I can stay here for now, but I do not know how long it will last.", "TEMPORARY HOUSING"], ["01:14", "If something unexpected happens, I do not have savings to fall back on.", "FINANCIAL BUFFER"]] },
+  "HH-0164": { note: "The respondent describes recent disruption to their living situation and difficulty meeting essential needs consistently. Follow up on their current accommodation and immediate priorities.", moments: [["00:37", "We have had to move more than once recently.", "RECENT MOVES"], ["01:23", "Some days it is difficult to cover everything we need.", "UNMET NEEDS"]] },
+  "HH-0168": { note: "The interviewee reports repeated changes in accommodation and describes caring responsibilities within the household. They say that food can run short before the end of the month.", moments: [["00:24", "We have moved several times and are still looking for somewhere stable.", "HOUSING INSTABILITY"], ["01:02", "I help care for a family member at home.", "CARE RESPONSIBILITY"], ["01:39", "Sometimes food runs short before the month is over.", "FOOD ACCESS"]] }
+};
+
 function modelDecision(item) { return item.probability > 50 ? "eligible" : "not-eligible"; }
 function shortId(id) { return id.replace("HH-", ""); }
 function householdLabel(count) { return `${count} household ${count === 1 ? "member" : "members"}`; }
@@ -77,6 +86,23 @@ function decodeYesNo(value) { return ({"si":"Yes","no":"No"})[value] || (value ?
 function decodeSpanish(value) { return ({"espanol_uno_mas_adultos":"One or more adults","espanol_ningun_adulto":"No adult"})[value] || (value ? value : "Not recorded"); }
 function decodeIlliteracy(value) { return ({"adultos_ninguno_analfabeta":"No adult","adultos_uno_mas_analfabeta":"One or more adults"})[value] || (value ? value : "Not recorded"); }
 
+function renderInterviewRecord(item) {
+  const example = interviewExamples[item.id];
+  document.getElementById("interviewer-note-text").textContent = example.note;
+  document.getElementById("transcript-list").innerHTML = example.moments.map(([time, quote, tag]) => `<div class="transcript-entry"><span class="timestamp">${time}</span><p>“${escapeHtml(quote)}”<br><span class="transcript-tag">${tag}</span></p></div>`).join("");
+}
+
+function setCaseTab(name) {
+  document.querySelectorAll("[data-case-tab]").forEach(button => {
+    const selected = button.dataset.caseTab === name;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-selected", String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  });
+  document.getElementById("assessment-panel").classList.toggle("hidden", name !== "assessment");
+  document.getElementById("interview-panel").classList.toggle("hidden", name !== "interview");
+}
+
 function renderCase() {
   const item = selectedCase;
   const priorDecision = decisionLog.find(entry => entry.id === item.id);
@@ -104,6 +130,7 @@ function renderCase() {
   else if (item.probability >= 75) probabilityDot.classList.add("dot-dark-green");
   document.getElementById("profile-summary").setAttribute("aria-label", `${item.members} household members, ${priorDecision ? "case solved" : "interview completed"}`);
   renderFactors(item);
+  renderInterviewRecord(item);
   selectedDecision = null;
   reasonInput.value = "";
   reasonInput.classList.add("hidden");
@@ -182,16 +209,17 @@ function renderHistory() {
 }
 function escapeHtml(value) { return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
 
-const modal = document.getElementById("notes-modal");
-function openNotes() {
-  document.getElementById("transcript-list").innerHTML = selectedCase.transcript.map(([time, quote, tag]) => `<div class="transcript-entry"><span class="timestamp">${time}</span><p>“${escapeHtml(quote)}”<br><span class="transcript-tag">${tag}</span></p></div>`).join("");
-  modal.classList.remove("hidden");
-}
-function closeNotes() { modal.classList.add("hidden"); }
-document.getElementById("open-notes").addEventListener("click", openNotes);
-document.getElementById("close-notes").addEventListener("click", closeNotes);
-document.getElementById("done-notes").addEventListener("click", closeNotes);
-modal.addEventListener("click", event => { if (event.target === modal) closeNotes(); });
-document.addEventListener("keydown", event => { if (event.key === "Escape") closeNotes(); });
+document.getElementById("open-notes").addEventListener("click", () => setCaseTab("interview"));
+document.querySelectorAll("[data-case-tab]").forEach(button => button.addEventListener("click", () => setCaseTab(button.dataset.caseTab)));
+document.querySelector(".case-tabs").addEventListener("keydown", event => {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  const tabs = [...document.querySelectorAll("[data-case-tab]")];
+  const current = tabs.indexOf(document.activeElement);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (current + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length;
+  tabs[next].focus();
+  setCaseTab(tabs[next].dataset.caseTab);
+});
 
+setCaseTab("assessment");
 renderCase();

@@ -49,10 +49,16 @@
             <button class="outline-button" id="next-case"><span>Next household</span><span class="arrow">→</span></button>
           </div>
 
+          <div class="case-tabs" role="tablist" aria-label="Household record">
+            <button class="case-tab selected" id="assessment-tab" type="button" role="tab" aria-selected="true" aria-controls="assessment-panel" data-case-tab="assessment">Assessment</button>
+            <button class="case-tab" id="interview-tab" type="button" role="tab" aria-selected="false" aria-controls="interview-panel" data-case-tab="interview">Interview notes</button>
+          </div>
+
+          <div class="case-tab-panel" id="assessment-panel" role="tabpanel" aria-labelledby="assessment-tab">
           <div class="profile-strip">
             <div class="profile-identity"><div class="household-symbol">⌂</div><div><strong id="location">Sotap field office</strong><span id="profile-summary">5 household members <i>·</i> Interview completed</span></div></div>
             <div class="profile-meta"><span class="meta-label">CASE STATUS</span><span class="status-chip awaiting" id="case-status-chip"><span class="status-dot" aria-hidden="true"></span><span id="case-status">Awaiting decision</span></span></div>
-            <div class="profile-meta"><span class="meta-label">INTERVIEWER NOTE</span><button class="note-link" id="open-notes">View key moments <span>↗</span></button></div>
+            <div class="profile-meta"><span class="meta-label">INTERVIEW RECORD</span><button class="note-link" id="open-notes">Open interview notes <span>↗</span></button></div>
           </div>
 
           <div class="metric-grid">
@@ -70,7 +76,7 @@
             <article class="metric-card">
               <div class="metric-label">UNMET BASIC NEEDS</div>
               <div class="metric-large" id="basic-needs-summary">High <small>severity</small></div>
-              <div class="metric-foot"><span>Food, water &amp; hygiene</span><span class="metric-icon icon-amber">◒</span></div>
+              <div class="metric-foot"><span class="metric-icon icon-amber">◒</span></div>
             </article>
           </div>
 
@@ -108,6 +114,17 @@
             <div class="decision-feedback" id="decision-feedback" aria-live="polite"></div>
           </div>
           <footer class="page-footer"><span>Cashy Oversight Challenge <i>·</i> Prototype</span><span>Reference values: synthetic challenge sample <i>·</i> No real household data</span></footer>
+          </div>
+
+          <section class="case-tab-panel interview-view hidden" id="interview-panel" role="tabpanel" aria-labelledby="interview-tab">
+            <div class="interview-heading"><div><div class="eyebrow">INTERVIEW RECORD <span class="eyebrow-line"></span> <span class="fictional-label">FICTIONAL EXAMPLE</span></div><h2>Interviewer notes &amp; key moments</h2><p>Qualitative context recorded during the household interview. Review alongside the scorecard; these notes do not determine eligibility.</p></div></div>
+            <div class="interview-grid">
+              <article class="panel interviewer-note-card"><div class="panel-header"><div><div class="ai-label"><span class="sparkle">✎</span> INTERVIEWER NOTE</div><h3>Field note</h3></div><span class="fictional-badge">SAMPLE</span></div><p class="interviewer-note-text" id="interviewer-note-text"></p><div class="note-source">Fictional example for the prototype. The S8 sample does not include interviewer free-text notes.</div></article>
+              <article class="panel key-moments-card"><div class="panel-header"><div><div class="ai-label"><span class="sparkle">◷</span> KEY MOMENTS</div><h3>Transcript excerpts</h3><span class="panel-hint">Illustrative text with sample timestamps; no video or recording is attached.</span></div></div><div class="transcript-list" id="transcript-list"></div></article>
+            </div>
+            <div class="interview-footnote"><span>ⓘ</span><p>Interview notes provide context for the caseworker. Treat statements as reported information to review with the household; they are not model inputs in this prototype.</p></div>
+            <footer class="page-footer"><span>Cashy Oversight Challenge <i>·</i> Prototype</span><span>Fictional interview material <i>·</i> No real recording</span></footer>
+          </section>
         </section>
 
         <section class="view-panel history-view hidden" id="history-view">
@@ -120,9 +137,6 @@
       </main>
     </div>
 
-    <div class="modal-backdrop hidden" id="notes-modal" role="dialog" aria-modal="true" aria-labelledby="notes-title">
-      <div class="notes-modal"><div class="modal-top"><div><span class="eyebrow">INTERVIEWER DRAFT <span class="eyebrow-line"></span> FICTIONAL</span><h2 id="notes-title">Interview key moments</h2></div><button class="close-modal" id="close-notes" aria-label="Close">×</button></div><p class="modal-intro">Illustrative transcript excerpts from a fictional interview. No real recording is included.</p><div class="video-frame" role="img" aria-label="Placeholder for a fictional interview video; no recording attached"><div class="video-silhouette"><span class="silhouette-head"></span><span class="silhouette-body"></span></div><span class="video-badge">SIMULATED VIDEO PREVIEW</span><span class="video-overlay-icon">▶</span><div class="video-bottom"><span>NO RECORDING ATTACHED</span><span>00:00 <i>/</i> 02:18</span></div></div><div class="transcript-list" id="transcript-list"></div><div class="modal-footer"><span>Notes are supporting context, not a model decision.</span><button class="modal-done" id="done-notes">Done</button></div></div>
-    </div>
     <script src="data/demo-cases.js"></script>
     <script src="app.js"></script>
   </body>
