@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cashy mark">
+  <rect width="128" height="128" rx="22" fill="#0868b1"/>
+  <path d="M88.5 40.5a35 35 0 1 0 9.8 31.2" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+  <path d="m53 64 13 13 26-28" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

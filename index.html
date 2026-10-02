@@ -71,7 +71,7 @@
             <article class="metric-card">
               <div class="metric-label">HOUSEHOLD SIZE</div>
               <div class="metric-large" id="household-size">05 <small>people</small></div>
-              <div class="metric-foot"><span>Interview record</span><span class="metric-icon icon-blue">⌂</span></div>
+              <div class="metric-foot"><div class="people-icons" id="household-people" role="img" aria-label="Household members"></div></div>
             </article>
             <article class="metric-card">
               <div class="metric-label">UNMET BASIC NEEDS</div>
@@ -93,9 +93,9 @@
             </section>
 
             <section class="panel cashy-panel">
-              <div class="panel-header"><div><div class="ai-label"><span class="sparkle">✳</span> CASHY MODEL</div><h3>Eligibility estimate</h3></div><span class="model-tag">PROBABILITY</span></div>
+              <div class="panel-header"><div><div class="ai-label"><img class="cashy-model-mark" src="assets/cashy-model-mark.svg" alt="" aria-hidden="true" /> CASHY MODEL</div><h3>Eligibility estimate</h3></div><span class="model-tag">PROBABILITY</span></div>
               <p class="cashy-intro">Estimated likelihood that the recorded operational decision is <b>inclusion</b>.</p>
-              <div class="probability-display"><div class="prob-number"><strong id="probability">51</strong><span>%</span></div><div class="prob-caption"><span class="prob-dot"></span><span id="prob-caption">Slightly more likely eligible</span></div></div>
+              <div class="probability-display"><div class="prob-number"><strong id="probability">51</strong><span>%</span></div><div class="prob-caption" id="prob-caption">Eligibility</div></div>
               <div class="probability-track"><div id="probability-fill"></div><span class="threshold-marker"><i></i><b>50% decision threshold</b></span></div>
               <div class="model-output"><span>Override audit reference</span><strong class="audit-threshold">50% threshold</strong></div>
               <div class="model-disclaimer"><span>ⓘ</span><p>Illustrative demo estimate. Eligibility depends on funding and administrative checks. This synthetic sample does not validate this probability.</p></div>

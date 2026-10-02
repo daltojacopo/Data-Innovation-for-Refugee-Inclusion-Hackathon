@@ -36,6 +36,11 @@
 .case-state.vulnerability-high{background:#d47c57}
 .case-state.vulnerability-severe{background:#b94f4f}
 .metric-card:not(.score-card) .metric-foot .metric-icon{margin-left:auto}
+.people-icons{display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-height:20px}
+.people-icons svg{width:12px;height:18px;fill:#71867b;flex:none}
+.cashy-model-mark{width:20px;height:20px;display:block;flex:none;border-radius:5px}
+.probability-display{align-items:center}
+.prob-caption{padding-bottom:0;color:#315d49;font-size:15px;font-weight:700;line-height:1.1}
 .queue-sort{display:flex;align-items:center;justify-content:space-between;width:100%;margin:0 0 7px;padding:5px 10px;border:1px solid #e8ede8;border-radius:5px;background:#fbfcfa;color:#75847b;font-size:8px;text-align:left}
 .queue-sort:hover{border-color:#cad8ce;background:#f5f8f5;color:#426b54}
 .queue-sort-icon{color:#4b8665;font-size:13px;line-height:1}
