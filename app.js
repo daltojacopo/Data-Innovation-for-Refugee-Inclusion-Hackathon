@@ -22,8 +22,6 @@ const interviewExamples = {
 };
 
 function shortId(id) { return id.replace("HH-", ""); }
-function householdLabel(count) { return `${count} household ${count === 1 ? "member" : "members"}`; }
-
 function illustrativeHouseholdMix(item) {
   const headSex = item.attributes.femaleHeaded === "jefatura_femenina" ? "woman" : item.attributes.femaleHeaded === "jefatura_masculina" ? "man" : null;
   const seed = Number(item.id.slice(-2));
@@ -132,7 +130,7 @@ function renderCase() {
   document.getElementById("case-id").textContent = item.id;
   document.getElementById("case-date").textContent = item.date;
   document.getElementById("location").textContent = item.office;
-  document.getElementById("profile-summary").innerHTML = `${householdLabel(item.members)} <i>·</i> ${priorDecision ? "Case solved" : "Interview completed"}`;
+  document.getElementById("profile-summary").textContent = priorDecision ? "Case solved" : "Interview completed";
   document.getElementById("case-status").textContent = priorDecision ? "Case solved" : "Awaiting decision";
   document.getElementById("case-status-chip").classList.toggle("solved", Boolean(priorDecision));
   document.getElementById("case-status-chip").classList.toggle("awaiting", !priorDecision);
@@ -143,10 +141,10 @@ function renderCase() {
   document.getElementById("household-size").innerHTML = `${item.members} <small>${item.members === 1 ? "person" : "people"}</small>`;
   const peopleIcons = document.getElementById("household-people");
   const householdMix = illustrativeHouseholdMix(item);
-  peopleIcons.innerHTML = householdMix.map(personIcon).join("") + '<span class="people-icons-caption" title="Age and individual sex are not recorded; composition is illustrative.">Illustrative mix</span>';
+  peopleIcons.innerHTML = householdMix.map(personIcon).join("");
   peopleIcons.setAttribute("aria-label", `Illustrative household mix, ${householdMix.map(person => `${person.age} ${person.sex}${person.recorded ? " (head sex from source data)" : " (illustrative)"}`).join(", ")}. Ages and individual sex are not recorded in the source data.`);
   document.getElementById("basic-needs-summary").innerHTML = `${item.basics} <small>severity</small>`;
-  document.getElementById("profile-summary").setAttribute("aria-label", `${item.members} household members, ${priorDecision ? "case solved" : "interview completed"}`);
+  document.getElementById("profile-summary").setAttribute("aria-label", priorDecision ? "Case solved" : "Interview completed");
   renderFactors(item);
   renderInterviewRecord(item);
   const pendingCount = cases.filter(candidate => !decisionLog.some(entry => entry.id === candidate.id)).length;

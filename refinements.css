@@ -36,7 +36,6 @@
 .people-icons svg{width:14px;height:21px;fill:#71867b;flex:none;overflow:visible}
 .people-icons svg[aria-label*="woman"],.people-icons svg[aria-label*="girl"]{fill:#4b9271}
 .people-icons svg[aria-label*="illustrative"]{opacity:.88}
-.people-icons-caption{align-self:flex-end;margin:0 0 2px 5px;color:#98a39b;font-size:8px;letter-spacing:.2px}
 .queue-sort{display:flex;align-items:center;justify-content:space-between;width:100%;margin:0 0 7px;padding:5px 10px;border:1px solid #e8ede8;border-radius:5px;background:#fbfcfa;color:#75847b;font-size:9px;text-align:left}
 .queue-sort:hover{border-color:#cad8ce;background:#f5f8f5;color:#426b54}
 .queue-sort-icon{color:#4b8665;font-size:14px;line-height:1}
