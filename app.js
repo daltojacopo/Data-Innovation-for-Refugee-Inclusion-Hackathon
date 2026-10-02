@@ -1,5 +1,102 @@
-const cases = window.CASHY_DEMO_CASES;
+const demoCases = window.CASHY_DEMO_CASES;
 const referenceMedians = window.CASHY_REFERENCE_MEDIANS;
+const factorMetadata = new Map(demoCases[0].factors.map(factor => [factor.key, factor]));
+const csvFactorKeys = [
+  "Demographics.HH.Head", "Demographics.Language", "Demographics.Profiles", "Demographics.Documentation",
+  "Needs_and_Coping.BasicNeeds", "Needs_and_Coping.Housing", "Needs_and_Coping.Neg.mechanism", "Needs_and_Coping.Dependency"
+];
+
+function csvHeaderKey(value) {
+  return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function normalizeCsvHousehold(row) {
+  const values = new Map(Object.entries(row).map(([key, value]) => [csvHeaderKey(key), value == null ? "" : String(value).trim()]));
+  const read = (...keys) => {
+    for (const key of keys) {
+      const value = values.get(csvHeaderKey(key));
+      if (value !== undefined) return value;
+    }
+    return "";
+  };
+  const sourceId = read("Household_ID", "Household ID", "id");
+  if (!sourceId || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(sourceId)) throw new Error("missing or invalid household ID");
+  const number = (field, ...aliases) => {
+    const raw = read(field, ...aliases);
+    if (!raw) return NaN;
+    return Number(raw.replace(",", "."));
+  };
+  const members = number("NumIntegrantes", "Household size", "members");
+  const score = number("FinalScore", "Final score", "score");
+  if (!Number.isInteger(members) || members < 1 || members > 11) throw new Error("invalid household size");
+  if (!Number.isFinite(score) || score < 0 || score > 81.1) throw new Error("invalid FinalScore");
+
+  const categoryValue = read("Vulnerability_Category", "Vulnerability category", "category").trim().toLowerCase();
+  const category = ({
+    "vulnerabilidad baja": "Low", low: "Low", "baja": "Low",
+    moderada: "Moderate", moderate: "Moderate",
+    elevada: "High", high: "High",
+    severa: "Severe", severe: "Severe"
+  })[categoryValue];
+  if (!category) throw new Error("unknown vulnerability category");
+
+  const factors = csvFactorKeys.map(key => {
+    const metadata = factorMetadata.get(key);
+    const value = number(key);
+    if (!metadata || !Number.isFinite(value)) throw new Error(`missing or invalid factor: ${key}`);
+    return { ...metadata, value };
+  });
+  const optional = key => read(key);
+  return {
+    id: `S8-${sourceId}`,
+    sourceId,
+    source: "S8 sample",
+    date: read("month", "date"),
+    office: read("OficinaACNUR", "UNHCR field office") || "Not recorded",
+    members,
+    score,
+    category,
+    factors,
+    admin: {
+      comar: optional("ScoreCOMAR_PIL"),
+      intentions: optional("ScoreIntenciones"),
+      duplicate: optional("ScoreDuplicidad")
+    },
+    attributes: {
+      dependencyCategory: optional("dependencyCategory"),
+      femaleHeaded: optional("FemaleHeadedHousehold"),
+      soleCarer: optional("CuidadorSolo"),
+      spanish: optional("HablaEspanol"),
+      illiteracy: optional("Analfabeta_si")
+    },
+    sourceScores: {
+      demographics: number("Demographics_Score"),
+      needsAndCoping: number("NeedsandCoping_Score"),
+      vulnerabilityIndex: number("Vulnerability_Score")
+    }
+  };
+}
+
+function normalizeCsvRows(rows) {
+  const cases = [];
+  const errors = [];
+  const seen = new Set();
+  let duplicates = 0;
+  rows.forEach((row, index) => {
+    try {
+      const household = normalizeCsvHousehold(row);
+      if (seen.has(household.id)) { duplicates += 1; return; }
+      seen.add(household.id);
+      cases.push(household);
+    } catch (error) {
+      errors.push({ row: row.__csvRow ?? index + 2, reason: error.message });
+    }
+  });
+  return { cases, errors, duplicates };
+}
+
+const bundledS8 = normalizeCsvRows(window.CASHY_S8_ROWS || []);
+let cases = [...demoCases, ...bundledS8.cases];
 
 let selectedCase = cases[0];
 let selectedDecision = null;
@@ -21,10 +118,11 @@ const interviewExamples = {
   "HH-0168": { note: "The interviewee reports repeated changes in accommodation and describes caring responsibilities within the household. They say that food can run short before the end of the month.", moments: [["00:24", "We have moved several times and are still looking for somewhere stable.", "HOUSING INSTABILITY"], ["01:02", "I help care for a family member at home.", "CARE RESPONSIBILITY"], ["01:39", "Sometimes food runs short before the month is over.", "FOOD ACCESS"]] }
 };
 
-function shortId(id) { return id.replace("HH-", ""); }
+function shortId(id) { return String(id).replace(/^(?:HH-|S8-)/, ""); }
 function illustrativeHouseholdMix(item) {
   const headSex = item.attributes.femaleHeaded === "jefatura_femenina" ? "woman" : item.attributes.femaleHeaded === "jefatura_masculina" ? "man" : null;
-  const seed = Number(item.id.slice(-2));
+  const seedSource = item.sourceId || item.id.replace(/\D/g, "");
+  const seed = Number(String(seedSource).slice(-2)) || 0;
   const mix = [{ age: "adult", sex: headSex || (seed % 2 ? "woman" : "man"), recorded: Boolean(headSex) }];
   for (let index = 1; index < item.members; index += 1) {
     const isChild = item.members > 2 ? index === item.members - 1 : item.members === 2 && item.attributes.soleCarer === "si";
@@ -51,7 +149,7 @@ function renderQueue() {
     const index = cases.indexOf(item);
     const logged = decisionLog.some(entry => entry.id === item.id);
     return `<button class="case-row ${selectedCase.id === item.id ? "selected" : ""}" data-case-index="${index}" aria-current="${selectedCase.id === item.id}">
-      <span class="case-avatar" aria-hidden="true">${shortId(item.id)}</span><span class="case-row-text"><strong>Household ${shortId(item.id)}</strong><small>${item.members} ${item.members === 1 ? "member" : "members"} · ${item.category} need</small></span><span class="case-state vulnerability-${item.category.toLowerCase()}" title="${item.category} vulnerability" aria-label="Vulnerability: ${item.category}"></span>
+      <span class="case-avatar" aria-hidden="true">${escapeHtml(shortId(item.id))}</span><span class="case-row-text"><strong>Household ${escapeHtml(shortId(item.id))}</strong><small>${item.members} ${item.members === 1 ? "member" : "members"} · ${escapeHtml(item.category)} need</small></span><span class="case-state vulnerability-${escapeHtml(item.category.toLowerCase())}" title="${escapeHtml(item.category)} vulnerability" aria-label="Vulnerability: ${escapeHtml(item.category)}"></span>
     </button>`;
   }).join("");
   const completed = cases.filter(item => decisionLog.some(entry => entry.id === item.id));
@@ -101,7 +199,7 @@ function renderAdministrativeChecks(item) {
   document.getElementById("admin-flags").innerHTML = checks.map(([label, info]) => `<article class="admin-flag ${info.state}"><span class="admin-indicator" aria-hidden="true"></span><div><strong>${label}</strong><b>${info.status}</b><small>${info.detail}</small></div></article>`).join("");
   const attrs = item.attributes;
   const labels = [["Dependency category", attrs.dependencyCategory], ["Female-headed household", decodeYesNo(attrs.femaleHeaded)], ["Sole carer", decodeYesNo(attrs.soleCarer)], ["Adult speaks Spanish", decodeSpanish(attrs.spanish)], ["Adult illiteracy", decodeIlliteracy(attrs.illiteracy)], ["Field office", item.office]];
-  document.getElementById("case-attributes").innerHTML = labels.map(([label, value]) => `<div><span>${label}</span><strong>${value || "Not recorded"}</strong></div>`).join("");
+  document.getElementById("case-attributes").innerHTML = labels.map(([label, value]) => `<div><span>${label}</span><strong>${escapeHtml(value || "Not recorded")}</strong></div>`).join("");
 }
 function decodeYesNo(value) { return ({"si":"Yes","no":"No"})[value] || (value ? value : "Not recorded"); }
 function decodeSpanish(value) { return ({"espanol_uno_mas_adultos":"One or more adults","espanol_ningun_adulto":"No adult"})[value] || (value ? value : "Not recorded"); }
@@ -109,8 +207,8 @@ function decodeIlliteracy(value) { return ({"adultos_ninguno_analfabeta":"No adu
 
 function renderInterviewRecord(item) {
   const example = interviewExamples[item.id];
-  document.getElementById("interviewer-note-text").textContent = example.note;
-  document.getElementById("transcript-list").innerHTML = example.moments.map(([time, quote, tag]) => `<div class="transcript-entry"><span class="timestamp">${time}</span><p>“${escapeHtml(quote)}”<br><span class="transcript-tag">${tag}</span></p></div>`).join("");
+  document.getElementById("interviewer-note-text").textContent = example ? example.note : "No interviewer note is included in this S8 record.";
+  document.getElementById("transcript-list").innerHTML = example ? example.moments.map(([time, quote, tag]) => `<div class="transcript-entry"><span class="timestamp">${time}</span><p>“${escapeHtml(quote)}”<br><span class="transcript-tag">${tag}</span></p></div>`).join("") : `<p class="transcript-empty">The S8 CSV contains no interview recording or transcript.</p>`;
 }
 
 function setCaseTab(name) {
@@ -226,6 +324,94 @@ sidebarToggle.addEventListener("click", () => {
   sidebarToggle.title = collapsed ? "Show sidebar" : "Hide sidebar";
 });
 
+function parseCsvText(text) {
+  const cleaned = String(text).replace(/^\uFEFF/, "");
+  const firstLine = cleaned.split(/\r?\n/, 1)[0] || "";
+  const delimiter = firstLine.includes(";") && !firstLine.includes(",") ? ";" : ",";
+  const table = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
+  for (let index = 0; index < cleaned.length; index += 1) {
+    const char = cleaned[index];
+    if (quoted) {
+      if (char === '"' && cleaned[index + 1] === '"') { field += '"'; index += 1; }
+      else if (char === '"') quoted = false;
+      else field += char;
+    } else if (char === '"' && field.length === 0) quoted = true;
+    else if (char === delimiter) { row.push(field); field = ""; }
+    else if (char === "\n" || char === "\r") {
+      row.push(field); field = "";
+      if (row.some(value => value.trim() !== "")) table.push(row);
+      row = [];
+      if (char === "\r" && cleaned[index + 1] === "\n") index += 1;
+    } else field += char;
+  }
+  if (quoted) throw new Error("The CSV contains an unclosed quoted field.");
+  row.push(field);
+  if (row.some(value => value.trim() !== "")) table.push(row);
+  if (table.length < 2) throw new Error("The CSV must include a header and at least one household row.");
+  const headers = table[0].map(value => value.trim());
+  const records = [];
+  const errors = [];
+  table.slice(1).forEach((values, index) => {
+    if (values.length !== headers.length) { errors.push({ row: index + 2, reason: "column count does not match the header" }); return; }
+    records.push({ ...Object.fromEntries(headers.map((header, column) => [header, values[column]])), __csvRow: index + 2 });
+  });
+  return { records, errors };
+}
+
+const csvInput = document.getElementById("scorecard-csv-input");
+const csvDialog = document.getElementById("csv-import-dialog");
+const csvConfirm = document.getElementById("csv-import-confirm");
+let pendingCsvCases = [];
+let pendingCsvFilename = "";
+
+document.getElementById("import-csv-trigger").addEventListener("click", () => csvInput.click());
+document.getElementById("csv-import-close").addEventListener("click", () => csvDialog.close());
+document.getElementById("csv-import-cancel").addEventListener("click", () => csvDialog.close());
+csvDialog.addEventListener("close", () => { pendingCsvCases = []; csvInput.value = ""; });
+
+csvInput.addEventListener("change", async () => {
+  const file = csvInput.files[0];
+  if (!file) return;
+  pendingCsvFilename = file.name;
+  let parsed;
+  try {
+    parsed = parseCsvText(await file.text());
+  } catch (error) {
+    parsed = { records: [], errors: [{ row: "—", reason: error.message }] };
+  }
+  const normalized = normalizeCsvRows(parsed.records);
+  const existingIds = new Set(cases.map(item => item.id));
+  let existingDuplicates = 0;
+  pendingCsvCases = normalized.cases.filter(item => {
+    if (existingIds.has(item.id)) { existingDuplicates += 1; return false; }
+    existingIds.add(item.id);
+    return true;
+  });
+  const issues = [...parsed.errors, ...normalized.errors];
+  const duplicates = normalized.duplicates + existingDuplicates;
+  document.getElementById("csv-import-filename").textContent = pendingCsvFilename;
+  document.getElementById("csv-import-summary").textContent = `${pendingCsvCases.length} new household${pendingCsvCases.length === 1 ? "" : "s"} ready to add. ${duplicates} duplicate ID${duplicates === 1 ? "" : "s"} will be skipped. ${issues.length} invalid row${issues.length === 1 ? "" : "s"} skipped. Existing households will not be changed.`;
+  const issuePanel = document.getElementById("csv-import-issues");
+  issuePanel.classList.toggle("hidden", issues.length === 0);
+  issuePanel.innerHTML = issues.length ? `<strong>Rows needing attention</strong><ul>${issues.slice(0, 6).map(issue => `<li>Row ${escapeHtml(issue.row)}: ${escapeHtml(issue.reason)}</li>`).join("")}${issues.length > 6 ? `<li>And ${issues.length - 6} more…</li>` : ""}</ul>` : "";
+  csvConfirm.disabled = pendingCsvCases.length === 0;
+  csvConfirm.textContent = pendingCsvCases.length ? `Add ${pendingCsvCases.length} household${pendingCsvCases.length === 1 ? "" : "s"}` : "No new households";
+  csvDialog.showModal();
+});
+
+csvConfirm.addEventListener("click", () => {
+  if (!pendingCsvCases.length) return;
+  const addedCount = pendingCsvCases.length;
+  cases.push(...pendingCsvCases);
+  pendingCsvCases = [];
+  document.getElementById("csv-import-feedback").textContent = `Added ${addedCount} household${addedCount === 1 ? "" : "s"} from ${pendingCsvFilename}.`;
+  csvDialog.close();
+  renderCase();
+});
+
 function renderHistory() {
   const eligible = decisionLog.filter(entry => entry.decision === "eligible").length;
   const notEligible = decisionLog.length - eligible;
@@ -234,7 +420,7 @@ function renderHistory() {
   rows.innerHTML = decisionLog.map(entry => `<tr><td>${entry.id}</td><td>${entry.decision === "eligible" ? "Eligible" : "Not eligible"}</td><td><span class="history-time">${entry.time}</span><small class="history-date">${entry.date}</small></td></tr>`).join("");
   document.getElementById("empty-history").classList.toggle("hidden", decisionLog.length > 0);
 }
-function escapeHtml(value) { return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
+function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
 
 document.getElementById("open-notes").addEventListener("click", () => setCaseTab("interview"));
 document.querySelectorAll("[data-case-tab]").forEach(button => button.addEventListener("click", () => setCaseTab(button.dataset.caseTab)));

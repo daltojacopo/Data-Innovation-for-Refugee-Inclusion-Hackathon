@@ -27,9 +27,10 @@
         <div class="queue-heading"><span>HOUSEHOLDS</span><span class="queue-total" id="household-total">06</span></div>
         <button class="queue-sort" id="sort-households" type="button" aria-label="Sort households by vulnerability, low to high"><span>Vulnerability: Low → High</span><span class="queue-sort-icon" aria-hidden="true">↕</span></button>
         <div class="case-list" id="case-list"></div>
+        <div class="sidebar-import-tools"><button class="sidebar-import-button" id="import-csv-trigger" type="button"><span aria-hidden="true">⇧</span> Import scorecard CSV</button><input id="scorecard-csv-input" type="file" accept=".csv,text/csv" hidden /><p class="csv-import-feedback" id="csv-import-feedback" role="status"></p></div>
         <div class="sidebar-bottom">
           <div class="privacy-icon">✳</div>
-          <div><strong>Demo workspace</strong><p>All cases and interview notes are fictional.</p></div>
+          <div><strong>Demo workspace</strong><p>Bundled records are synthetic. CSV additions stay in this browser session.</p></div>
         </div>
       </aside>
 
@@ -99,7 +100,7 @@
           </div>
 
           <section class="panel admin-panel">
-            <div class="panel-header"><div><div class="ai-label"><span class="sparkle">!</span> ADMINISTRATIVE CHECKS</div><h3>Flags that may override the scorecard</h3><span class="panel-hint">Review these separately from household need factors.</span></div></div>
+            <div class="panel-header"><div><div class="ai-label"><span class="sparkle">!</span> ADMINISTRATIVE CHECKS</div><h3>Flags that may override the application</h3><span class="panel-hint">Review these separately from household need factors.</span></div></div>
             <div class="admin-grid" id="admin-flags"></div>
             <details class="attributes-details"><summary>Additional household and interview context</summary><div class="attributes-grid" id="case-attributes"></div></details>
           </section>
@@ -133,7 +134,17 @@
       </main>
     </div>
 
+    <dialog class="csv-import-dialog" id="csv-import-dialog" aria-labelledby="csv-import-title">
+      <div class="csv-import-dialog-header"><div><div class="eyebrow">HOUSEHOLD DATA</div><h2 id="csv-import-title">Review CSV import</h2></div><button class="csv-dialog-close" id="csv-import-close" type="button" aria-label="Close import preview">×</button></div>
+      <p class="csv-import-filename" id="csv-import-filename"></p>
+      <p class="csv-import-summary" id="csv-import-summary"></p>
+      <div class="csv-import-issues hidden" id="csv-import-issues"></div>
+      <p class="csv-import-data-note">Eligibility outcome and target columns are ignored. Extra imports stay in this browser session and are not sent to a server. S8 records contain no interview notes or recordings.</p>
+      <div class="csv-import-actions"><button class="outline-button" id="csv-import-cancel" type="button">Cancel</button><button class="record-button" id="csv-import-confirm" type="button" disabled>Add households</button></div>
+    </dialog>
+
     <script src="data/demo-cases.js"></script>
+    <script src="data/s8-households.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
