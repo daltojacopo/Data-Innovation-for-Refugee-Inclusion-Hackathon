@@ -34,9 +34,9 @@ function normalizeCsvHousehold(row) {
   const categoryValue = read("Vulnerability_Category", "Vulnerability category", "category").trim().toLowerCase();
   const category = ({
     "vulnerabilidad baja": "Low", low: "Low", "baja": "Low",
-    moderada: "Moderate", moderate: "Moderate",
-    elevada: "High", high: "High",
-    severa: "Severe", severe: "Severe"
+    "vulnerabilidad moderada": "Moderate", moderada: "Moderate", moderate: "Moderate",
+    "vulnerabilidad elevada": "High", elevada: "High", high: "High",
+    "vulnerabilidad severa": "Severe", severa: "Severe", severe: "Severe"
   })[categoryValue];
   if (!category) throw new Error("unknown vulnerability category");
 
