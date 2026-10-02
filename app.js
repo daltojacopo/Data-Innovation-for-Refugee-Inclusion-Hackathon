@@ -30,12 +30,13 @@ const feedback = document.getElementById("decision-feedback");
 
 function modelDecision(item) { return item.probability > 50 ? "eligible" : "not-eligible"; }
 function shortId(id) { return id.replace("HH-", ""); }
+function householdLabel(count) { return `${count} household ${count === 1 ? "member" : "members"}`; }
 
 function renderQueue() {
   list.innerHTML = cases.map((item, index) => {
     const logged = decisionLog.some(entry => entry.id === item.id);
     return `<button class="case-row ${selectedCase.id === item.id ? "selected" : ""}" data-case-index="${index}" aria-current="${selectedCase.id === item.id}">
-      <span class="case-avatar">${item.glyph}</span><span class="case-row-text"><strong>Household ${shortId(item.id)}</strong><small>${item.members} members · ${item.category} need</small></span><span class="case-state ${logged ? "done" : ""}"></span>
+      <span class="case-avatar">${item.glyph}</span><span class="case-row-text"><strong>Household ${shortId(item.id)}</strong><small>${item.members} ${item.members === 1 ? "member" : "members"} · ${item.category} need</small></span><span class="case-state ${logged ? "done" : ""}"></span>
     </button>`;
   }).join("");
   document.getElementById("history-count").textContent = decisionLog.length;
@@ -55,7 +56,7 @@ function renderCase() {
   document.getElementById("case-id").textContent = item.id;
   document.getElementById("case-date").textContent = item.date;
   document.getElementById("location").textContent = item.office;
-  document.getElementById("profile-summary").innerHTML = `${String(item.members).padStart(2, "0")} household members <i>·</i> ${priorDecision ? "Case solved" : "Interview completed"}`;
+  document.getElementById("profile-summary").innerHTML = `${householdLabel(item.members)} <i>·</i> ${priorDecision ? "Case solved" : "Interview completed"}`;
   document.getElementById("case-status").textContent = priorDecision ? "Case solved" : "Awaiting decision";
   document.getElementById("case-status-chip").classList.toggle("solved", Boolean(priorDecision));
   document.getElementById("case-status-chip").classList.toggle("awaiting", !priorDecision);
@@ -63,11 +64,17 @@ function renderCase() {
   document.getElementById("category").textContent = item.category;
   document.getElementById("score-progress").style.width = `${Math.min(item.score / 81.1 * 100, 100)}%`;
   document.getElementById("score-delta").textContent = `${item.score >= 27.7 ? "+" : ""}${(item.score - 27.7).toFixed(1)} ${item.score >= 27.7 ? "above" : "below"} mean ${item.score >= 27.7 ? "↗" : "↘"}`;
-  document.getElementById("household-size").innerHTML = `${String(item.members).padStart(2, "0")} <small>people</small>`;
+  document.getElementById("household-size").innerHTML = `${item.members} <small>${item.members === 1 ? "person" : "people"}</small>`;
   document.getElementById("basic-needs-summary").innerHTML = `${item.basics} <small>severity</small>`;
   document.getElementById("probability").textContent = item.probability;
   document.getElementById("probability-fill").style.width = `${item.probability}%`;
-  document.getElementById("prob-caption").textContent = item.probability === 50 ? "Even chance" : item.probability > 50 ? item.probability < 60 ? "Slightly more likely eligible" : "More likely eligible" : item.probability > 40 ? "Slightly more likely not eligible" : "More likely not eligible";
+  const probabilityCaption = document.getElementById("prob-caption");
+  probabilityCaption.textContent = item.probability === 50 ? "Even chance" : item.probability > 50 ? item.probability < 60 ? "Slightly more likely eligible" : "More likely eligible" : item.probability > 40 ? "Slightly more likely not eligible" : "More likely not eligible";
+  const probabilityDot = probabilityCaption.previousElementSibling;
+  probabilityDot.classList.remove("dot-yellow", "dot-light-green", "dot-dark-green");
+  if (item.probability >= 25 && item.probability < 50) probabilityDot.classList.add("dot-yellow");
+  else if (item.probability >= 50 && item.probability < 75) probabilityDot.classList.add("dot-light-green");
+  else if (item.probability >= 75) probabilityDot.classList.add("dot-dark-green");
   document.getElementById("profile-summary").setAttribute("aria-label", `${item.members} household members, ${priorDecision ? "case solved" : "interview completed"}`);
   renderFactors(item);
   selectedDecision = null;
@@ -98,7 +105,7 @@ recordButton.addEventListener("click", () => {
   const override = selectedDecision !== modelDecision(selectedCase);
   decisionLog.unshift({ id: selectedCase.id, probability: selectedCase.probability, model: modelDecision(selectedCase), decision: selectedDecision, override, reason: override ? reasonInput.value.trim() : "", time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(new Date()) });
   feedback.textContent = override ? "Override recorded with your reason." : "Decision recorded.";
-  document.getElementById("profile-summary").innerHTML = `${String(selectedCase.members).padStart(2, "0")} household members <i>·</i> Case solved`;
+  document.getElementById("profile-summary").innerHTML = `${householdLabel(selectedCase.members)} <i>·</i> Case solved`;
   document.getElementById("case-status").textContent = "Case solved";
   document.getElementById("case-status-chip").classList.remove("awaiting");
   document.getElementById("case-status-chip").classList.add("solved");
