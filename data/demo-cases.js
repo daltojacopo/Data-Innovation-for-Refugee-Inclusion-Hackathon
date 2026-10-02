@@ -548,6 +548,7 @@ window.CASHY_DEMO_CASES = [
     "category": "Severe",
     "basics": "High",
     "glyph": "◌",
+    "cashyDemoConfidence": 91,
     "factors": [
       {
         "key": "Demographics.HH.Head",

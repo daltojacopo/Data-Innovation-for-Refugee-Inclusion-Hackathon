@@ -143,7 +143,17 @@ function renderCase() {
   const householdMix = illustrativeHouseholdMix(item);
   peopleIcons.innerHTML = householdMix.map(personIcon).join("");
   peopleIcons.setAttribute("aria-label", `Illustrative household mix, ${householdMix.map(person => `${person.age} ${person.sex}${person.recorded ? " (head sex from source data)" : " (illustrative)"}`).join(", ")}. Ages and individual sex are not recorded in the source data.`);
-  document.getElementById("basic-needs-summary").innerHTML = `${item.basics} <small>severity</small>`;
+  const adminFlagCount = Object.values(item.admin).filter(value => value !== "" && value != null && Number(value) !== 0).length;
+  const adminSummary = document.getElementById("admin-checks-summary");
+  adminSummary.innerHTML = adminFlagCount ? `${adminFlagCount} <small>${adminFlagCount === 1 ? "flag to review" : "flags to review"}</small>` : "No flags <small>recorded</small>";
+  const adminIcon = document.getElementById("admin-checks-icon");
+  adminIcon.textContent = adminFlagCount ? "!" : "✓";
+  adminIcon.classList.toggle("icon-amber", adminFlagCount > 0);
+  adminIcon.classList.toggle("icon-green", adminFlagCount === 0);
+  adminIcon.closest(".metric-card").classList.toggle("has-admin-flags", adminFlagCount > 0);
+  const cashySignal = document.getElementById("cashy-demo-signal");
+  cashySignal.classList.toggle("hidden", !(item.cashyDemoConfidence > 85));
+  cashySignal.open = false;
   document.getElementById("profile-summary").setAttribute("aria-label", priorDecision ? "Case solved" : "Interview completed");
   renderFactors(item);
   renderInterviewRecord(item);
