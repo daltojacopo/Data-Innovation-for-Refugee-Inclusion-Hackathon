@@ -415,13 +415,13 @@ gap:6px}
 .sort-icon{font-size:13px;
 color:#477b61}
 .content-grid{display:grid;
-grid-template-columns:minmax(0,1.7fr) minmax(260px,.9fr);
+grid-template-columns:minmax(0,1fr);
 gap:12px}
 .panel{background:#fff;
 border:1px solid var(--line);
 border-radius:8px;
 box-shadow:var(--shadow)}
-.factor-panel,.cashy-panel{padding:15px 16px}
+.factor-panel{padding:15px 16px}
 .panel-header{display:flex;
 justify-content:space-between;
 align-items:flex-start}
@@ -511,8 +511,6 @@ text-align:center;
 line-height:10px;
 font-size:8px;
 color:#74877c}
-.cashy-panel{display:flex;
-flex-direction:column}
 .ai-label{font-size:8px;
 letter-spacing:.9px;
 font-weight:700;
@@ -523,87 +521,6 @@ align-items:center;
 gap:5px}
 .sparkle{font-size:12px;
 color:#4e9975}
-.model-tag{font-size:7px;
-letter-spacing:.8px;
-font-weight:700;
-color:#829088;
-border:1px solid #e6ebe6;
-border-radius:4px;
-padding:4px 6px}
-.cashy-intro{font-size:9px;
-line-height:1.5;
-color:#86918b;
-margin:3px 0 12px;
-max-width:260px}
-.cashy-intro b{color:#54665d;
-font-weight:600}
-.probability-display{display:flex;
-align-items:flex-end;
-gap:11px}
-.prob-number{color:#22664f;
-line-height:.95}
-.prob-number strong{font:700 43px Manrope,sans-serif;
-letter-spacing:-2px}
-.prob-number span{font:600 17px Manrope,sans-serif;
-margin-left:2px}
-.prob-caption{font-size:9px;
-color:#74857b;
-padding-bottom:4px;
-display:flex;
-gap:5px;
-align-items:center}
-.prob-dot{width:6px;
-height:6px;
-border-radius:50%;
-background:#57a47b}
-.probability-track{position:relative;
-margin:13px 5px 24px 0;
-height:5px;
-background:#edf0ed;
-border-radius:5px}
-.probability-track>div{height:100%;
-width:51%;
-background:#4f9875;
-border-radius:5px}
-.threshold-marker{position:absolute;
-left:50%;
-top:-5px;
-height:15px;
-border-left:1px dashed #84958b}
-.threshold-marker b{position:absolute;
-top:14px;
-left:0;
-transform:translateX(-50%);
-white-space:nowrap;
-font-size:7px;
-font-weight:500;
-color:#8e9992}
-.model-output{padding:10px 0;
-border-top:1px solid #edf0ed;
-display:flex;
-justify-content:space-between;
-align-items:center;
-font-size:9px;
-color:#85918a}
-.model-output strong{font-size:9px;
-padding:4px 8px;
-border-radius:4px}
-.suggestion-yes{color:#267451;
-background:#edf6f0}
-.suggestion-no{color:#a65148;
-background:#fff0ed}
-.model-disclaimer{display:flex;
-gap:7px;
-margin-top:auto;
-padding:9px;
-background:#f8f7f1;
-border:1px solid #f0eee4;
-border-radius:5px;
-color:#998a67;
-font-size:8px;
-line-height:1.45}
-.model-disclaimer>span{font-size:10px}
-.model-disclaimer p{margin:0}
 .decision-section{position:relative;
 margin-top:14px;
 padding:13px 16px;
@@ -726,17 +643,6 @@ font-size:10px;
 color:#52625a}
 .history-panel td:first-child{font-weight:700;
 color:#344b42}
-.table-prob{color:#438264;
-font-weight:700}
-.table-chip{display:inline-flex;
-padding:4px 7px;
-border-radius:4px;
-font-size:8px;
-font-weight:700}
-.table-chip.agree{color:#448065;
-background:#eef5ef}
-.table-chip.override{color:#af6e2d;
-background:#fff3e6}
 .empty-history{position:absolute;
 inset:60px 0 0;
 display:flex;
@@ -878,7 +784,7 @@ font-weight:600}
 .view-panel{padding-left:25px;
 padding-right:25px}
 .topbar{padding:0 25px}
-.content-grid{grid-template-columns:minmax(0,1.4fr) minmax(245px,.9fr)}
+.content-grid{grid-template-columns:minmax(0,1fr)}
 .profile-strip{gap:18px}
 .profile-identity{min-width:230px}
 .profile-meta{padding-left:15px}
@@ -890,7 +796,6 @@ padding-right:11px}
 .view-panel{padding:24px 18px}
 .topbar{padding:0 18px}
 .content-grid{grid-template-columns:1fr}
-.cashy-panel{min-height:250px}
 .profile-strip{flex-wrap:wrap;
 gap:12px}
 .profile-identity{min-width:100%;
@@ -960,7 +865,7 @@ gap:10px}
 .sort-label{font-size:0;
 white-space:nowrap}
 .sort-icon{font-size:15px}
-.factor-panel,.cashy-panel{padding:13px 11px}
+.factor-panel{padding:13px 11px}
 .factor-head,.factor-row{grid-template-columns:minmax(112px,1.2fr) .68fr .73fr .54fr;
 gap:5px}
 .factor-name{font-size:8px;
@@ -1010,4 +915,3 @@ padding:0 9px}
 .transcript-entry{grid-template-columns:37px 1fr}
 .modal-footer{gap:10px}
 }
-

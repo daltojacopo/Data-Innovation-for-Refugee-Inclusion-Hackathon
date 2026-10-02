@@ -8,7 +8,6 @@ const decisionLog = [];
 const list = document.getElementById("case-list");
 const factorList = document.getElementById("factor-list");
 const recordButton = document.getElementById("record-decision");
-const reasonInput = document.getElementById("override-reason");
 const feedback = document.getElementById("decision-feedback");
 const nextHouseholdButton = document.getElementById("next-household-after-decision");
 const queueCompleteNotice = document.getElementById("queue-complete-notice");
@@ -22,7 +21,6 @@ const interviewExamples = {
   "HH-0168": { note: "The interviewee reports repeated changes in accommodation and describes caring responsibilities within the household. They say that food can run short before the end of the month.", moments: [["00:24", "We have moved several times and are still looking for somewhere stable.", "HOUSING INSTABILITY"], ["01:02", "I help care for a family member at home.", "CARE RESPONSIBILITY"], ["01:39", "Sometimes food runs short before the month is over.", "FOOD ACCESS"]] }
 };
 
-function modelDecision(item) { return item.probability > 50 ? "eligible" : "not-eligible"; }
 function shortId(id) { return id.replace("HH-", ""); }
 function householdLabel(count) { return `${count} household ${count === 1 ? "member" : "members"}`; }
 
@@ -148,8 +146,6 @@ function renderCase() {
   peopleIcons.innerHTML = householdMix.map(personIcon).join("") + '<span class="people-icons-caption" title="Age and individual sex are not recorded; composition is illustrative.">Illustrative mix</span>';
   peopleIcons.setAttribute("aria-label", `Illustrative household mix, ${householdMix.map(person => `${person.age} ${person.sex}${person.recorded ? " (head sex from source data)" : " (illustrative)"}`).join(", ")}. Ages and individual sex are not recorded in the source data.`);
   document.getElementById("basic-needs-summary").innerHTML = `${item.basics} <small>severity</small>`;
-  document.getElementById("probability").textContent = item.probability;
-  document.getElementById("probability-fill").style.width = `${item.probability}%`;
   document.getElementById("profile-summary").setAttribute("aria-label", `${item.members} household members, ${priorDecision ? "case solved" : "interview completed"}`);
   renderFactors(item);
   renderInterviewRecord(item);
@@ -157,19 +153,15 @@ function renderCase() {
   nextHouseholdButton.classList.toggle("hidden", !priorDecision || pendingCount === 0);
   queueCompleteNotice.classList.toggle("hidden", !priorDecision || pendingCount > 0);
   selectedDecision = null;
-  reasonInput.value = "";
-  reasonInput.classList.add("hidden");
-  feedback.textContent = priorDecision ? `Recorded: ${priorDecision.decision === "eligible" ? "Eligible" : "Not eligible"}${priorDecision.override ? " · override reason saved" : ""}.` : "";
+  feedback.textContent = priorDecision ? `Recorded: ${priorDecision.decision === "eligible" ? "Eligible" : "Not eligible"}.` : "";
   document.querySelectorAll(".decision-button").forEach(button => { button.classList.remove("selected"); button.disabled = Boolean(priorDecision); });
   recordButton.disabled = true;
   renderQueue();
 }
 
 function updateDecisionState() {
-  const isOverride = selectedDecision && selectedDecision !== modelDecision(selectedCase);
-  reasonInput.classList.toggle("hidden", !isOverride);
-  recordButton.disabled = !selectedDecision || (isOverride && !reasonInput.value.trim());
-  feedback.textContent = isOverride ? "This differs from the probability-based audit category. Add a short reason to record the override." : selectedDecision ? "This decision matches the probability-based audit category." : "";
+  recordButton.disabled = !selectedDecision;
+  feedback.textContent = selectedDecision ? "Decision selected. Record it when ready." : "";
 }
 
 document.querySelectorAll(".decision-button").forEach(button => button.addEventListener("click", () => {
@@ -177,13 +169,10 @@ document.querySelectorAll(".decision-button").forEach(button => button.addEventL
   document.querySelectorAll(".decision-button").forEach(item => item.classList.toggle("selected", item === button));
   updateDecisionState();
 }));
-reasonInput.addEventListener("input", updateDecisionState);
-
 recordButton.addEventListener("click", () => {
   if (!selectedDecision || recordButton.disabled) return;
-  const override = selectedDecision !== modelDecision(selectedCase);
   const recordedAt = new Date();
-  decisionLog.unshift({ id: selectedCase.id, probability: selectedCase.probability, model: modelDecision(selectedCase), decision: selectedDecision, override, reason: override ? reasonInput.value.trim() : "", time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(recordedAt), date: new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(recordedAt) });
+  decisionLog.unshift({ id: selectedCase.id, decision: selectedDecision, time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(recordedAt), date: new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(recordedAt) });
   renderCase();
 });
 
@@ -230,11 +219,11 @@ sidebarToggle.addEventListener("click", () => {
 });
 
 function renderHistory() {
-  const overrides = decisionLog.filter(entry => entry.override).length;
-  const average = decisionLog.length ? Math.round(decisionLog.reduce((total, entry) => total + entry.probability, 0) / decisionLog.length) : "—";
-  document.getElementById("history-summary").innerHTML = `<article class="history-stat"><span>DECISIONS RECORDED</span><strong>${decisionLog.length}</strong><small>Across this demo session</small></article><article class="history-stat"><span>OVERRIDES</span><strong>${overrides}</strong><small>Decision differs from probability category</small></article><article class="history-stat"><span>MEAN CASHY PROBABILITY</span><strong>${average}${average === "—" ? "" : "%"}</strong><small>Descriptive only · not a performance score</small></article>`;
+  const eligible = decisionLog.filter(entry => entry.decision === "eligible").length;
+  const notEligible = decisionLog.length - eligible;
+  document.getElementById("history-summary").innerHTML = `<article class="history-stat"><span>DECISIONS RECORDED</span><strong>${decisionLog.length}</strong><small>Across this demo session</small></article><article class="history-stat"><span>ELIGIBLE</span><strong>${eligible}</strong><small>Operator decisions</small></article><article class="history-stat"><span>NOT ELIGIBLE</span><strong>${notEligible}</strong><small>Operator decisions</small></article>`;
   const rows = document.getElementById("history-rows");
-  rows.innerHTML = decisionLog.map(entry => `<tr><td>${entry.id}</td><td><span class="table-prob">${entry.probability}%</span> · ${entry.model === "eligible" ? "Eligible" : "Not eligible"}</td><td>${entry.decision === "eligible" ? "Eligible" : "Not eligible"}${entry.reason ? `<br><small class="reason-note">Reason: ${escapeHtml(entry.reason)}</small>` : ""}</td><td><span class="table-chip ${entry.override ? "override" : "agree"}">${entry.override ? "Override" : "Aligned"}</span></td><td><span class="history-time">${entry.time}</span><small class="history-date">${entry.date}</small></td></tr>`).join("");
+  rows.innerHTML = decisionLog.map(entry => `<tr><td>${entry.id}</td><td>${entry.decision === "eligible" ? "Eligible" : "Not eligible"}</td><td><span class="history-time">${entry.time}</span><small class="history-date">${entry.date}</small></td></tr>`).join("");
   document.getElementById("empty-history").classList.toggle("hidden", decisionLog.length > 0);
 }
 function escapeHtml(value) { return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }

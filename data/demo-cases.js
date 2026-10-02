@@ -7,7 +7,6 @@ window.CASHY_DEMO_CASES = [
     "score": 0.0,
     "category": "Low",
     "basics": "Low",
-    "probability": 25,
     "glyph": "⌂",
     "factors": [
       {
@@ -116,7 +115,6 @@ window.CASHY_DEMO_CASES = [
     "score": 9.2,
     "category": "Low",
     "basics": "High",
-    "probability": 38,
     "glyph": "♧",
     "factors": [
       {
@@ -225,7 +223,6 @@ window.CASHY_DEMO_CASES = [
     "score": 19.4,
     "category": "Low",
     "basics": "Low",
-    "probability": 49,
     "glyph": "◉",
     "factors": [
       {
@@ -334,7 +331,6 @@ window.CASHY_DEMO_CASES = [
     "score": 27.1,
     "category": "Moderate",
     "basics": "Low",
-    "probability": 51,
     "glyph": "◍",
     "factors": [
       {
@@ -443,7 +439,6 @@ window.CASHY_DEMO_CASES = [
     "score": 40.4,
     "category": "High",
     "basics": "High",
-    "probability": 71,
     "glyph": "⌂",
     "factors": [
       {
@@ -552,7 +547,6 @@ window.CASHY_DEMO_CASES = [
     "score": 81.1,
     "category": "Severe",
     "basics": "High",
-    "probability": 82,
     "glyph": "◌",
     "factors": [
       {

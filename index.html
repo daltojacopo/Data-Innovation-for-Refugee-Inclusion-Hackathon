@@ -91,14 +91,6 @@
               <div class="factor-note"><span class="note-info">i</span><span>The reference is each factor’s median across 1,900 synthetic S8 households. Model importance describes global predictive reliance for EligibilityTarget; it does not show whether a factor raises or lowers eligibility, or explain this case’s outcome. Negative coping is a vulnerability marker, not a prediction of how a family will use cash. Eligibility also depends on administrative checks and available funding.</span></div>
             </section>
 
-            <section class="panel cashy-panel">
-              <div class="panel-header"><div><div class="ai-label"><img class="cashy-model-mark" src="assets/cashy-model-mark.svg" alt="" aria-hidden="true" /> CASHY MODEL</div><h3>Eligibility estimate</h3></div><span class="model-tag">PROBABILITY</span></div>
-              <p class="cashy-intro">Estimated likelihood that the recorded operational decision is <b>inclusion</b>.</p>
-              <div class="probability-display"><div class="prob-number"><strong id="probability">51</strong><span>%</span></div><div class="prob-caption" id="prob-caption">Eligibility</div></div>
-              <div class="probability-track"><div id="probability-fill"></div><span class="threshold-marker"><i></i><b>50% decision threshold</b></span></div>
-              <div class="model-output"><span>Override audit reference</span><strong class="audit-threshold">50% threshold</strong></div>
-              <div class="model-disclaimer"><span>ⓘ</span><p>Illustrative demo estimate. Eligibility depends on funding and administrative checks. This synthetic sample does not validate this probability.</p></div>
-            </section>
           </div>
 
           <section class="panel admin-panel">
@@ -108,8 +100,8 @@
           </section>
 
           <div class="decision-section">
-            <div class="decision-copy"><div class="decision-icon">✓</div><div><div class="decision-eyebrow">HUMAN DECISION</div><h2>Your decision</h2><p>Cashy provides an estimate. You record the final eligibility decision.</p></div></div>
-            <div class="decision-controls"><div class="decision-buttons" role="group" aria-label="Select household eligibility decision"><button class="decision-button eligible" data-decision="eligible"><span class="decision-check">✓</span> Eligible</button><button class="decision-button not-eligible" data-decision="not-eligible"><span class="decision-cross">×</span> Not eligible</button></div><input class="override-reason hidden" id="override-reason" type="text" maxlength="120" placeholder="Why are you overriding Cashy?" aria-label="Reason for override" /><button class="record-button" id="record-decision" disabled>Record decision <span>→</span></button><button class="next-household-button hidden" id="next-household-after-decision" type="button">Next household</button><span class="queue-complete-notice hidden" id="queue-complete-notice">All households reviewed</span></div>
+            <div class="decision-copy"><div class="decision-icon">✓</div><div><div class="decision-eyebrow">HUMAN DECISION</div><h2>Your decision</h2><p>Review the household information above and record your eligibility decision.</p></div></div>
+            <div class="decision-controls"><div class="decision-buttons" role="group" aria-label="Select household eligibility decision"><button class="decision-button eligible" data-decision="eligible"><span class="decision-check">✓</span> Eligible</button><button class="decision-button not-eligible" data-decision="not-eligible"><span class="decision-cross">×</span> Not eligible</button></div><button class="record-button" id="record-decision" disabled>Record decision <span>→</span></button><button class="next-household-button hidden" id="next-household-after-decision" type="button">Next household</button><span class="queue-complete-notice hidden" id="queue-complete-notice">All households reviewed</span></div>
             <div class="decision-feedback" id="decision-feedback" aria-live="polite"></div>
           </div>
           <footer class="page-footer"><span>Cashy Oversight Challenge <i>·</i> Prototype</span><span>Reference values: synthetic challenge sample <i>·</i> No real household data</span></footer>
@@ -127,10 +119,10 @@
         </section>
 
         <section class="view-panel history-view hidden" id="history-view">
-          <div class="page-heading"><div><div class="eyebrow">CASEWORKER WORKSPACE <span class="eyebrow-line"></span> DECISION RECORD</div><h1>Decision history</h1><p class="page-subtitle">A trace of your decisions and where they differ from Cashy’s estimate.</p></div><button class="outline-button" id="back-to-review"><span>← Back to case review</span></button></div>
+          <div class="page-heading"><div><div class="eyebrow">CASEWORKER WORKSPACE <span class="eyebrow-line"></span> DECISION RECORD</div><h1>Decision history</h1><p class="page-subtitle">A record of the eligibility decisions you made for each household.</p></div><button class="outline-button" id="back-to-review"><span>← Back to case review</span></button></div>
           <div class="history-summary" id="history-summary"></div>
-          <section class="panel history-panel"><div class="panel-header"><div><h3>Recorded decisions</h3><span class="panel-hint">Demo entries are local to this browser session.</span></div><span class="history-live"><span></span> LIVE LOG</span></div><div class="history-table-wrap"><table><thead><tr><th>HOUSEHOLD</th><th>CASHY ESTIMATE</th><th>YOUR DECISION</th><th>RESULT</th><th>DATE / TIME</th></tr></thead><tbody id="history-rows"></tbody></table><div class="empty-history" id="empty-history"><div>◷</div><strong>No decisions recorded yet</strong><p>Choose a household and record a decision to build the audit trail.</p><button class="text-button" id="start-review">Start a case review →</button></div></div></section>
-          <div class="history-footnote"><span>ⓘ</span><p>An override is recorded when your decision differs from the probability-based audit category (above 50% = eligible; 50% or below = not eligible). This threshold is a demo convention. “Correctness” requires a named reference determination and cannot be established from this demo alone.</p></div>
+          <section class="panel history-panel"><div class="panel-header"><div><h3>Recorded decisions</h3><span class="panel-hint">Demo entries are local to this browser session.</span></div><span class="history-live"><span></span> LIVE LOG</span></div><div class="history-table-wrap"><table><thead><tr><th>HOUSEHOLD</th><th>YOUR DECISION</th><th>DATE / TIME</th></tr></thead><tbody id="history-rows"></tbody></table><div class="empty-history" id="empty-history"><div>◷</div><strong>No decisions recorded yet</strong><p>Choose a household and record a decision to build the audit trail.</p><button class="text-button" id="start-review">Start a case review →</button></div></div></section>
+          <div class="history-footnote"><span>ⓘ</span><p>This log records the eligibility decisions made by the caseworker. It does not compare them with an automated recommendation.</p></div>
           <footer class="page-footer"><span>Cashy Oversight Challenge <i>·</i> Prototype</span><span>All data shown is synthetic</span></footer>
         </section>
       </main>
