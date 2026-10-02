@@ -13,7 +13,7 @@
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar">
+      <aside class="sidebar" id="app-sidebar">
         <a class="brand" href="#" aria-label="Cashy home">
           <span class="brand-mark"><span></span></span>
           <span>cashy<span class="brand-dot">.</span></span>
@@ -35,7 +35,7 @@
 
       <main class="main-content">
         <header class="topbar">
-          <div class="breadcrumb"><span>Cash assistance</span><span class="crumb-slash">/</span><strong id="topbar-view">Case review</strong></div>
+          <div class="topbar-start"><button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Hide sidebar" aria-controls="app-sidebar" aria-expanded="true" title="Hide sidebar"><span aria-hidden="true">☰</span></button><div class="breadcrumb"><span>Cash assistance</span><span class="crumb-slash">/</span><strong id="topbar-view">Case review</strong></div></div>
           <div class="topbar-right"><button class="avatar" aria-label="Signed in as caseworker">AM</button></div>
         </header>
 
@@ -46,7 +46,6 @@
               <h1>Review household <span class="case-id" id="case-id">HH-0148</span></h1>
               <p class="page-subtitle">Review the household evidence, then record your own eligibility decision.</p>
             </div>
-            <button class="outline-button" id="next-case"><span>Next household</span><span class="arrow">→</span></button>
           </div>
 
           <div class="case-tabs" role="tablist" aria-label="Household record">
@@ -110,7 +109,7 @@
 
           <div class="decision-section">
             <div class="decision-copy"><div class="decision-icon">✓</div><div><div class="decision-eyebrow">HUMAN DECISION</div><h2>Your decision</h2><p>Cashy provides an estimate. You record the final eligibility decision.</p></div></div>
-            <div class="decision-controls"><div class="decision-buttons" role="group" aria-label="Select household eligibility decision"><button class="decision-button eligible" data-decision="eligible"><span class="decision-check">✓</span> Eligible</button><button class="decision-button not-eligible" data-decision="not-eligible"><span class="decision-cross">×</span> Not eligible</button></div><input class="override-reason hidden" id="override-reason" type="text" maxlength="120" placeholder="Why are you overriding Cashy?" aria-label="Reason for override" /><button class="record-button" id="record-decision" disabled>Record decision <span>→</span></button></div>
+            <div class="decision-controls"><div class="decision-buttons" role="group" aria-label="Select household eligibility decision"><button class="decision-button eligible" data-decision="eligible"><span class="decision-check">✓</span> Eligible</button><button class="decision-button not-eligible" data-decision="not-eligible"><span class="decision-cross">×</span> Not eligible</button></div><input class="override-reason hidden" id="override-reason" type="text" maxlength="120" placeholder="Why are you overriding Cashy?" aria-label="Reason for override" /><button class="record-button" id="record-decision" disabled>Record decision <span>→</span></button><button class="next-household-button hidden" id="next-household-after-decision" type="button">Next household</button><span class="queue-complete-notice hidden" id="queue-complete-notice">All households reviewed</span></div>
             <div class="decision-feedback" id="decision-feedback" aria-live="polite"></div>
           </div>
           <footer class="page-footer"><span>Cashy Oversight Challenge <i>·</i> Prototype</span><span>Reference values: synthetic challenge sample <i>·</i> No real household data</span></footer>

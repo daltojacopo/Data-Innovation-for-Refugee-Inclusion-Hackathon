@@ -10,6 +10,8 @@ const factorList = document.getElementById("factor-list");
 const recordButton = document.getElementById("record-decision");
 const reasonInput = document.getElementById("override-reason");
 const feedback = document.getElementById("decision-feedback");
+const nextHouseholdButton = document.getElementById("next-household-after-decision");
+const queueCompleteNotice = document.getElementById("queue-complete-notice");
 
 const interviewExamples = {
   "HH-0148": { note: "The interviewee describes renting a room month to month. They say essential needs are generally met at present, but they have little room in the budget for unexpected costs.", moments: [["00:34", "I rent the room one month at a time and do not know what will happen after that.", "HOUSING UNCERTAINTY"], ["01:11", "Most weeks I can manage food, but there is not much left for an emergency.", "BUDGET PRESSURE"]] },
@@ -23,6 +25,29 @@ const interviewExamples = {
 function modelDecision(item) { return item.probability > 50 ? "eligible" : "not-eligible"; }
 function shortId(id) { return id.replace("HH-", ""); }
 function householdLabel(count) { return `${count} household ${count === 1 ? "member" : "members"}`; }
+
+function illustrativeHouseholdMix(item) {
+  const headSex = item.attributes.femaleHeaded === "jefatura_femenina" ? "woman" : item.attributes.femaleHeaded === "jefatura_masculina" ? "man" : null;
+  const seed = Number(item.id.slice(-2));
+  const mix = [{ age: "adult", sex: headSex || (seed % 2 ? "woman" : "man"), recorded: Boolean(headSex) }];
+  for (let index = 1; index < item.members; index += 1) {
+    const isChild = item.members > 2 ? index === item.members - 1 : item.members === 2 && item.attributes.soleCarer === "si";
+    mix.push({ age: isChild ? "child" : "adult", sex: ((seed + index) % 2 ? "girl" : "boy"), recorded: false });
+  }
+  return mix;
+}
+
+function personIcon(person) {
+  const child = person.age === "child";
+  const woman = person.sex === "woman" || person.sex === "girl";
+  const viewBox = child ? "0 0 12 18" : "0 0 14 21";
+  const cx = child ? 6 : 7;
+  const headY = child ? 3 : 4;
+  const headR = child ? 2.5 : 3;
+  const torso = child ? "M6 7c-1.8 0-3.2 1.4-3.2 3.2v2.3h1.5V18h3.4v-5.5h1.5v-2.3C9.2 8.4 7.8 7 6 7Z" : "M7 9c-2.2 0-4 1.8-4 4v3h2v5h4v-5h2v-3c0-2.2-1.8-4-4-4Z";
+  const hair = woman ? `<path d="M${cx - headR} ${headY}c.2-2.2 1.5-3.4 ${headR}-3.4s${headR - .2} 1.2 ${headR} 3.4c-.7-.7-1.5-1-3-1s-2.3.3-3 1Z"/>` : "";
+  return `<svg viewBox="${viewBox}" role="img" aria-label="${person.sex === "woman" ? "Adult woman" : person.sex === "man" ? "Adult man" : person.sex === "girl" ? "Girl" : "Boy"}${person.recorded ? ", head sex from source data" : ", illustrative"}" focusable="false"><circle cx="${cx}" cy="${headY}" r="${headR}"/><path d="${torso}"/>${hair}</svg>`;
+}
 
 function renderQueue() {
   const previousOpen = Object.fromEntries([...list.querySelectorAll("details[data-queue-group]")].map(group => [group.dataset.queueGroup, group.open]));
@@ -119,14 +144,18 @@ function renderCase() {
   document.getElementById("score-delta").textContent = `${item.score >= 27.7 ? "+" : ""}${(item.score - 27.7).toFixed(1)} ${item.score >= 27.7 ? "above" : "below"} mean ${item.score >= 27.7 ? "↗" : "↘"}`;
   document.getElementById("household-size").innerHTML = `${item.members} <small>${item.members === 1 ? "person" : "people"}</small>`;
   const peopleIcons = document.getElementById("household-people");
-  peopleIcons.innerHTML = Array.from({length: item.members}, () => '<svg viewBox="0 0 14 21" aria-hidden="true" focusable="false"><circle cx="7" cy="4" r="3"/><path d="M7 9c-2.2 0-4 1.8-4 4v3h2v5h4v-5h2v-3c0-2.2-1.8-4-4-4Z"/></svg>').join("");
-  peopleIcons.setAttribute("aria-label", `${item.members} ${item.members === 1 ? "person" : "people"} in household`);
+  const householdMix = illustrativeHouseholdMix(item);
+  peopleIcons.innerHTML = householdMix.map(personIcon).join("") + '<span class="people-icons-caption" title="Age and individual sex are not recorded; composition is illustrative.">Illustrative mix</span>';
+  peopleIcons.setAttribute("aria-label", `Illustrative household mix, ${householdMix.map(person => `${person.age} ${person.sex}${person.recorded ? " (head sex from source data)" : " (illustrative)"}`).join(", ")}. Ages and individual sex are not recorded in the source data.`);
   document.getElementById("basic-needs-summary").innerHTML = `${item.basics} <small>severity</small>`;
   document.getElementById("probability").textContent = item.probability;
   document.getElementById("probability-fill").style.width = `${item.probability}%`;
   document.getElementById("profile-summary").setAttribute("aria-label", `${item.members} household members, ${priorDecision ? "case solved" : "interview completed"}`);
   renderFactors(item);
   renderInterviewRecord(item);
+  const pendingCount = cases.filter(candidate => !decisionLog.some(entry => entry.id === candidate.id)).length;
+  nextHouseholdButton.classList.toggle("hidden", !priorDecision || pendingCount === 0);
+  queueCompleteNotice.classList.toggle("hidden", !priorDecision || pendingCount > 0);
   selectedDecision = null;
   reasonInput.value = "";
   reasonInput.classList.add("hidden");
@@ -155,15 +184,7 @@ recordButton.addEventListener("click", () => {
   const override = selectedDecision !== modelDecision(selectedCase);
   const recordedAt = new Date();
   decisionLog.unshift({ id: selectedCase.id, probability: selectedCase.probability, model: modelDecision(selectedCase), decision: selectedDecision, override, reason: override ? reasonInput.value.trim() : "", time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(recordedAt), date: new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(recordedAt) });
-  feedback.textContent = override ? "Override recorded with your reason." : "Decision recorded.";
-  document.getElementById("profile-summary").innerHTML = `${householdLabel(selectedCase.members)} <i>·</i> Case solved`;
-  document.getElementById("case-status").textContent = "Case solved";
-  document.getElementById("case-status-chip").classList.remove("awaiting");
-  document.getElementById("case-status-chip").classList.add("solved");
-  document.querySelectorAll(".decision-button").forEach(button => { button.disabled = true; });
-  renderQueue();
-  recordButton.disabled = true;
-  document.getElementById("history-count").textContent = decisionLog.length;
+  renderCase();
 });
 
 list.addEventListener("click", event => {
@@ -177,9 +198,14 @@ document.getElementById("sort-households").addEventListener("click", () => {
   vulnerabilityAscending = !vulnerabilityAscending;
   renderQueue();
 });
-document.getElementById("next-case").addEventListener("click", () => {
-  selectedCase = cases[(cases.indexOf(selectedCase) + 1) % cases.length];
+nextHouseholdButton.addEventListener("click", () => {
+  const pending = cases.filter(item => !decisionLog.some(entry => entry.id === item.id));
+  pending.sort((a, b) => (a.score - b.score) * (vulnerabilityAscending ? 1 : -1));
+  if (!pending.length) return;
+  selectedCase = pending[0];
+  setCaseTab("assessment");
   renderCase();
+  showView("review");
 });
 
 function showView(name) {
@@ -194,6 +220,14 @@ function showView(name) {
 document.querySelectorAll(".nav-item").forEach(button => button.addEventListener("click", () => showView(button.dataset.view)));
 document.getElementById("back-to-review").addEventListener("click", () => showView("review"));
 document.getElementById("start-review").addEventListener("click", () => showView("review"));
+
+const sidebarToggle = document.getElementById("sidebar-toggle");
+sidebarToggle.addEventListener("click", () => {
+  const collapsed = document.querySelector(".app-shell").classList.toggle("sidebar-collapsed");
+  sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+  sidebarToggle.setAttribute("aria-label", collapsed ? "Show sidebar" : "Hide sidebar");
+  sidebarToggle.title = collapsed ? "Show sidebar" : "Hide sidebar";
+});
 
 function renderHistory() {
   const overrides = decisionLog.filter(entry => entry.override).length;
