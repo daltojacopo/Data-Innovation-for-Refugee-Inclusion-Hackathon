@@ -1,26 +1,9 @@
-const cases = [
-  { id: "HH-0148", date: "18 JUN 2024", office: "Sotap field office", members: 5, score: 42.6, category: "High", basics: "High", probability: 51, glyph: "⌂", factors: [
-    ["Basic needs", 8.7, 5.0, "High", "◒"], ["Housing stability", 8.1, 4.4, "High", "⌂"], ["Negative coping", 7.7, 3.8, "High", "↘"], ["Dependency burden", 5.6, 4.0, "Moderate", "♧"], ["Specific needs", 4.6, 2.2, "Moderate", "✳"], ["Language barrier", 2.5, 2.6, "Low", "文"]
-  ], transcript: [["00:34", "We have been staying with relatives, but there is no space for all of us now.", "HOUSING INSTABILITY"], ["01:12", "Some days we skip meals so the children can eat.", "FOOD INSECURITY"], ["01:46", "I am the only adult caring for the children at the moment.", "SOLE CAREGIVER"]] },
-  { id: "HH-0152", date: "18 JUN 2024", office: "Sotap field office", members: 3, score: 58.4, category: "Severe", basics: "High", probability: 82, glyph: "♧", factors: [
-    ["Housing stability", 9.4, 4.4, "High", "⌂"], ["Basic needs", 9.0, 5.0, "High", "◒"], ["Dependency burden", 8.5, 4.0, "High", "♧"], ["Specific needs", 7.9, 2.2, "High", "✳"], ["Negative coping", 7.0, 3.8, "Moderate", "↘"], ["Documentation", 4.2, 3.3, "Moderate", "▤"]
-  ], transcript: [["00:28", "We have moved three times this month and are staying in a temporary shelter.", "UNSTABLE HOUSING"], ["01:03", "My mother needs daily care and I cannot leave her alone.", "CARE NEEDS"], ["01:42", "We have run out of food before the end of the week more than once.", "FOOD INSECURITY"]] },
-  { id: "HH-0161", date: "19 JUN 2024", office: "Fupal field office", members: 4, score: 34.2, category: "Moderate", basics: "Moderate", probability: 38, glyph: "◉", factors: [
-    ["Basic needs", 6.0, 5.0, "High", "◒"], ["Housing stability", 5.4, 4.4, "Moderate", "⌂"], ["Dependency burden", 4.8, 4.0, "Moderate", "♧"], ["Documentation", 4.1, 3.3, "Moderate", "▤"], ["Language barrier", 3.0, 2.6, "Low", "文"], ["Negative coping", 2.9, 3.8, "Low", "↘"]
-  ], transcript: [["00:41", "Rent is difficult to manage, although we have had the same room for several months.", "HOUSING COSTS"], ["01:18", "We have enough food most days, but we sometimes borrow from neighbours.", "BASIC NEEDS"], ["01:54", "My sister helps with the children when I need to look for work.", "SUPPORT NETWORK"]] },
-  { id: "HH-0167", date: "19 JUN 2024", office: "Sotap field office", members: 1, score: 24.8, category: "Low", basics: "Moderate", probability: 49, glyph: "◍", factors: [
-    ["Housing stability", 5.2, 4.4, "High", "⌂"], ["Basic needs", 4.9, 5.0, "Moderate", "◒"], ["Language barrier", 3.6, 2.6, "Moderate", "文"], ["Documentation", 3.4, 3.3, "Low", "▤"], ["Negative coping", 2.8, 3.8, "Low", "↘"], ["Specific needs", 1.7, 2.2, "Low", "✳"]
-  ], transcript: [["00:36", "I rent a room month by month and do not know if I can stay after this one.", "HOUSING SECURITY"], ["01:19", "I have been trying to find more stable work since arriving.", "INCOME UNCERTAINTY"]] },
-  { id: "HH-0170", date: "20 JUN 2024", office: "Foten field office", members: 6, score: 47.1, category: "High", basics: "High", probability: 71, glyph: "⌂", factors: [
-    ["Dependency burden", 8.9, 4.0, "High", "♧"], ["Basic needs", 8.4, 5.0, "High", "◒"], ["Negative coping", 8.0, 3.8, "High", "↘"], ["Housing stability", 7.6, 4.4, "High", "⌂"], ["Specific needs", 5.6, 2.2, "Moderate", "✳"], ["Documentation", 2.8, 3.3, "Low", "▤"]
-  ], transcript: [["00:25", "There are six of us in a one-room apartment, including my elderly father.", "CROWDING & CARE"], ["01:11", "We have reduced meals at the end of the month to make the money last.", "FOOD INSECURITY"], ["01:55", "My father needs help getting to medical appointments.", "CARE NEEDS"]] },
-  { id: "HH-0174", date: "20 JUN 2024", office: "Pcr Cdmx field office", members: 2, score: 18.9, category: "Low", basics: "Low", probability: 25, glyph: "◌", factors: [
-    ["Documentation", 3.8, 3.3, "Moderate", "▤"], ["Language barrier", 3.1, 2.6, "Moderate", "文"], ["Housing stability", 2.8, 4.4, "Low", "⌂"], ["Basic needs", 2.6, 5.0, "Low", "◒"], ["Dependency burden", 1.9, 4.0, "Low", "♧"], ["Negative coping", 1.4, 3.8, "Low", "↘"]
-  ], transcript: [["00:33", "We can cover rent this month, but we have very little set aside for emergencies.", "FINANCIAL RESILIENCE"], ["01:28", "My partner translates for me when we need to visit an office.", "LANGUAGE SUPPORT"]] }
-];
+const cases = window.CASHY_DEMO_CASES;
+const referenceMedians = window.CASHY_REFERENCE_MEDIANS;
 
 let selectedCase = cases[0];
 let selectedDecision = null;
+let vulnerabilityAscending = true;
 const decisionLog = [];
 const list = document.getElementById("case-list");
 const factorList = document.getElementById("factor-list");
@@ -33,22 +16,66 @@ function shortId(id) { return id.replace("HH-", ""); }
 function householdLabel(count) { return `${count} household ${count === 1 ? "member" : "members"}`; }
 
 function renderQueue() {
-  list.innerHTML = cases.map((item, index) => {
+  const previousOpen = Object.fromEntries([...list.querySelectorAll("details[data-queue-group]")].map(group => [group.dataset.queueGroup, group.open]));
+  const makeRows = subset => [...subset].sort((a, b) => (a.score - b.score) * (vulnerabilityAscending ? 1 : -1)).map(item => {
+    const index = cases.indexOf(item);
     const logged = decisionLog.some(entry => entry.id === item.id);
     return `<button class="case-row ${selectedCase.id === item.id ? "selected" : ""}" data-case-index="${index}" aria-current="${selectedCase.id === item.id}">
-      <span class="case-avatar">${item.glyph}</span><span class="case-row-text"><strong>Household ${shortId(item.id)}</strong><small>${item.members} ${item.members === 1 ? "member" : "members"} · ${item.category} need</small></span><span class="case-state ${logged ? "done" : ""}"></span>
+      <span class="case-avatar" aria-hidden="true">${shortId(item.id)}</span><span class="case-row-text"><strong>Household ${shortId(item.id)}</strong><small>${item.members} ${item.members === 1 ? "member" : "members"} · ${item.category} need</small></span><span class="case-state vulnerability-${item.category.toLowerCase()}" title="${item.category} vulnerability" aria-label="Vulnerability: ${item.category}"></span>
     </button>`;
   }).join("");
+  const completed = cases.filter(item => decisionLog.some(entry => entry.id === item.id));
+  const pending = cases.filter(item => !decisionLog.some(entry => entry.id === item.id));
+  const group = (key, title, subset) => `<details class="case-queue-group" data-queue-group="${key}" ${previousOpen[key] ?? true ? "open" : ""}><summary><span>${title}</span><b>${subset.length}</b></summary><div class="case-queue-items">${makeRows(subset) || `<p class="empty-queue">No households</p>`}</div></details>`;
+  list.innerHTML = group("pending", "To complete", pending) + group("completed", "Completed", completed);
+  const sortButton = document.getElementById("sort-households");
+  sortButton.querySelector("span").textContent = `Vulnerability: ${vulnerabilityAscending ? "Low → High" : "High → Low"}`;
+  sortButton.setAttribute("aria-label", `Sort households by vulnerability, ${vulnerabilityAscending ? "low to high" : "high to low"}. Activate to reverse order.`);
+  sortButton.title = `Reverse vulnerability order (${vulnerabilityAscending ? "currently low to high" : "currently high to low"})`;
   document.getElementById("history-count").textContent = decisionLog.length;
+  document.getElementById("household-total").textContent = String(cases.length).padStart(2, "0");
 }
 
 function renderFactors(item) {
-  factorList.innerHTML = item.factors.map(([name, value, reference, impact, glyph]) => `<div class="factor-row">
-    <div class="factor-name"><span class="factor-glyph">${glyph}</span><span>${name}</span></div>
-    <div class="factor-score">${value.toFixed(1)} <small>/ 10</small></div><div class="sample-score">${reference.toFixed(1)} <small>/ 10</small></div>
-    <div class="impact"><span class="impact-badge impact-${impact.toLowerCase()}">${impact}</span></div>
-  </div>`).join("");
+  const order = ["Demographics", "Needs and coping"];
+  factorList.innerHTML = order.map(group => `<details class="factor-group" open><summary>${group} <span>scorecard block</span></summary>${item.factors.filter(factor => factor.group === group).map(factor => {
+    const median = referenceMedians[factor.key];
+    const distance = factor.value - median;
+    const comparison = Math.abs(distance) < 0.0005 ? "At median" : `${distance > 0 ? "+" : "−"}${Math.abs(distance).toFixed(2)} vs median`;
+    return `<div class="factor-row">
+      <div class="factor-name"><span class="factor-glyph">${factorGlyph(factor.key)}</span><span>${factor.name}</span></div>
+      <div class="factor-score">${factor.value.toFixed(2)}</div><div class="sample-score">${median.toFixed(2)}</div>
+      <div class="importance-cell" title="Global importance: ${factor.importance.toFixed(4)} ± ${factor.std.toFixed(4)}; p = ${factor.p.toExponential(2)}"><small class="factor-delta">${comparison}</small><span class="importance-bar"><i style="width:${factor.importance / 0.069211 * 100}%"></i></span><small>Global ${factor.importance.toFixed(3)}</small></div>
+    </div>`;
+  }).join("")}</details>`).join("");
+  renderAdministrativeChecks(item);
 }
+
+function factorGlyph(key) {
+  return ({"Demographics.HH.Head":"⌂","Demographics.Language":"文","Demographics.Profiles":"✳","Demographics.Documentation":"▤","Needs_and_Coping.BasicNeeds":"◒","Needs_and_Coping.Housing":"⌂","Needs_and_Coping.Neg.mechanism":"↘","Needs_and_Coping.Dependency":"♧"})[key];
+}
+
+function flagDisplay(value, type) {
+  if (value === "" || value == null) return { status: "Not applicable", detail: "Blank in source record", state: "neutral" };
+  const numeric = Number(value);
+  if (type === "comar") return numeric === 0 ? {status:"No score modifier", detail:"0 recorded", state:"clear"} : {status:"Administrative modifier", detail:`${numeric > 0 ? "+" : ""}${numeric} in source record`, state:"flagged"};
+  return numeric === 0 ? {status:"No flag recorded", detail:"0 recorded", state:"clear"} : {status:"Flag recorded", detail:`${numeric} in source record`, state:"flagged"};
+}
+
+function renderAdministrativeChecks(item) {
+  const checks = [
+    ["Asylum procedure (COMAR)", flagDisplay(item.admin.comar, "comar")],
+    ["Stated intentions", flagDisplay(item.admin.intentions, "flag")],
+    ["Duplicate registration", flagDisplay(item.admin.duplicate, "flag")]
+  ];
+  document.getElementById("admin-flags").innerHTML = checks.map(([label, info]) => `<article class="admin-flag ${info.state}"><span class="admin-indicator" aria-hidden="true"></span><div><strong>${label}</strong><b>${info.status}</b><small>${info.detail}</small></div></article>`).join("");
+  const attrs = item.attributes;
+  const labels = [["Dependency category", attrs.dependencyCategory], ["Female-headed household", decodeYesNo(attrs.femaleHeaded)], ["Sole carer", decodeYesNo(attrs.soleCarer)], ["Adult speaks Spanish", decodeSpanish(attrs.spanish)], ["Adult illiteracy", decodeIlliteracy(attrs.illiteracy)], ["Field office", item.office]];
+  document.getElementById("case-attributes").innerHTML = labels.map(([label, value]) => `<div><span>${label}</span><strong>${value || "Not recorded"}</strong></div>`).join("");
+}
+function decodeYesNo(value) { return ({"si":"Yes","no":"No"})[value] || (value ? value : "Not recorded"); }
+function decodeSpanish(value) { return ({"espanol_uno_mas_adultos":"One or more adults","espanol_ningun_adulto":"No adult"})[value] || (value ? value : "Not recorded"); }
+function decodeIlliteracy(value) { return ({"adultos_ninguno_analfabeta":"No adult","adultos_uno_mas_analfabeta":"One or more adults"})[value] || (value ? value : "Not recorded"); }
 
 function renderCase() {
   const item = selectedCase;
@@ -103,7 +130,8 @@ reasonInput.addEventListener("input", updateDecisionState);
 recordButton.addEventListener("click", () => {
   if (!selectedDecision || recordButton.disabled) return;
   const override = selectedDecision !== modelDecision(selectedCase);
-  decisionLog.unshift({ id: selectedCase.id, probability: selectedCase.probability, model: modelDecision(selectedCase), decision: selectedDecision, override, reason: override ? reasonInput.value.trim() : "", time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(new Date()) });
+  const recordedAt = new Date();
+  decisionLog.unshift({ id: selectedCase.id, probability: selectedCase.probability, model: modelDecision(selectedCase), decision: selectedDecision, override, reason: override ? reasonInput.value.trim() : "", time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(recordedAt), date: new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(recordedAt) });
   feedback.textContent = override ? "Override recorded with your reason." : "Decision recorded.";
   document.getElementById("profile-summary").innerHTML = `${householdLabel(selectedCase.members)} <i>·</i> Case solved`;
   document.getElementById("case-status").textContent = "Case solved";
@@ -120,6 +148,11 @@ list.addEventListener("click", event => {
   if (!button) return;
   selectedCase = cases[Number(button.dataset.caseIndex)];
   renderCase();
+  showView("review");
+});
+document.getElementById("sort-households").addEventListener("click", () => {
+  vulnerabilityAscending = !vulnerabilityAscending;
+  renderQueue();
 });
 document.getElementById("next-case").addEventListener("click", () => {
   selectedCase = cases[(cases.indexOf(selectedCase) + 1) % cases.length];
@@ -144,7 +177,7 @@ function renderHistory() {
   const average = decisionLog.length ? Math.round(decisionLog.reduce((total, entry) => total + entry.probability, 0) / decisionLog.length) : "—";
   document.getElementById("history-summary").innerHTML = `<article class="history-stat"><span>DECISIONS RECORDED</span><strong>${decisionLog.length}</strong><small>Across this demo session</small></article><article class="history-stat"><span>OVERRIDES</span><strong>${overrides}</strong><small>Decision differs from probability category</small></article><article class="history-stat"><span>MEAN CASHY PROBABILITY</span><strong>${average}${average === "—" ? "" : "%"}</strong><small>Descriptive only · not a performance score</small></article>`;
   const rows = document.getElementById("history-rows");
-  rows.innerHTML = decisionLog.map(entry => `<tr><td>${entry.id}</td><td><span class="table-prob">${entry.probability}%</span> · ${entry.model === "eligible" ? "Eligible" : "Not eligible"}</td><td>${entry.decision === "eligible" ? "Eligible" : "Not eligible"}${entry.reason ? `<br><small class="reason-note">Reason: ${escapeHtml(entry.reason)}</small>` : ""}</td><td><span class="table-chip ${entry.override ? "override" : "agree"}">${entry.override ? "Override" : "Aligned"}</span></td><td>${entry.time}</td></tr>`).join("");
+  rows.innerHTML = decisionLog.map(entry => `<tr><td>${entry.id}</td><td><span class="table-prob">${entry.probability}%</span> · ${entry.model === "eligible" ? "Eligible" : "Not eligible"}</td><td>${entry.decision === "eligible" ? "Eligible" : "Not eligible"}${entry.reason ? `<br><small class="reason-note">Reason: ${escapeHtml(entry.reason)}</small>` : ""}</td><td><span class="table-chip ${entry.override ? "override" : "agree"}">${entry.override ? "Override" : "Aligned"}</span></td><td><span class="history-time">${entry.time}</span><small class="history-date">${entry.date}</small></td></tr>`).join("");
   document.getElementById("empty-history").classList.toggle("hidden", decisionLog.length > 0);
 }
 function escapeHtml(value) { return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }

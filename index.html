@@ -24,7 +24,8 @@
           <button class="nav-item" data-view="history"><span class="nav-icon">◷</span> Decision history <span class="nav-count" id="history-count">0</span></button>
         </nav>
         <div class="sidebar-rule"></div>
-        <div class="queue-heading"><span>HOUSEHOLDS</span><span class="queue-total">06</span></div>
+        <div class="queue-heading"><span>HOUSEHOLDS</span><span class="queue-total" id="household-total">06</span></div>
+        <button class="queue-sort" id="sort-households" type="button" aria-label="Sort households by vulnerability, low to high"><span>Vulnerability: Low → High</span><span class="queue-sort-icon" aria-hidden="true">↕</span></button>
         <div class="case-list" id="case-list"></div>
         <div class="sidebar-bottom">
           <div class="privacy-icon">✳</div>
@@ -74,15 +75,15 @@
           </div>
 
           <div class="section-heading">
-            <div><h2>What shapes this assessment</h2><p>Scorecard factors ranked by their contribution to this household’s vulnerability score.</p></div>
+            <div><h2>What shapes this assessment</h2><p>All eight scorecard factors, shown against the S8 sample median. Higher scores indicate greater vulnerability.</p></div>
           </div>
 
           <div class="content-grid">
             <section class="panel factor-panel">
-              <div class="panel-header"><div><h3>Household factors</h3><span class="panel-hint">Illustrative case scores and contribution ranking</span></div><span class="sort-label"><span class="sort-icon">↓</span> Highest impact first</span></div>
-              <div class="factor-head"><span>FACTOR</span><span>CASE SCORE</span><span>DEMO REF.</span><span>IMPACT</span></div>
+              <div class="panel-header"><div><h3>Household factors</h3><span class="panel-hint">Recorded score compared with the sample median</span></div></div>
+              <div class="factor-head"><span>FACTOR</span><span>CASE</span><span>MEDIAN</span><span>IMPORTANCE · GLOBAL</span></div>
               <div id="factor-list"></div>
-              <div class="factor-note"><span class="note-info">i</span><span>Factor scores, reference values and contribution ranking are illustrative demo values. Eligibility also depends on administrative checks and available funding.</span></div>
+              <div class="factor-note"><span class="note-info">i</span><span>The reference is each factor’s median across 1,900 synthetic S8 households. Model importance describes global predictive reliance for EligibilityTarget; it does not show whether a factor raises or lowers eligibility, or explain this case’s outcome. Negative coping is a vulnerability marker, not a prediction of how a family will use cash. Eligibility also depends on administrative checks and available funding.</span></div>
             </section>
 
             <section class="panel cashy-panel">
@@ -95,6 +96,12 @@
             </section>
           </div>
 
+          <section class="panel admin-panel">
+            <div class="panel-header"><div><div class="ai-label"><span class="sparkle">!</span> ADMINISTRATIVE CHECKS</div><h3>Flags that may override the scorecard</h3><span class="panel-hint">Review these separately from household need factors.</span></div></div>
+            <div class="admin-grid" id="admin-flags"></div>
+            <details class="attributes-details"><summary>Additional household and interview context</summary><div class="attributes-grid" id="case-attributes"></div></details>
+          </section>
+
           <div class="decision-section">
             <div class="decision-copy"><div class="decision-icon">✓</div><div><div class="decision-eyebrow">HUMAN DECISION</div><h2>Your decision</h2><p>Cashy provides an estimate. You record the final eligibility decision.</p></div></div>
             <div class="decision-controls"><div class="decision-buttons" role="group" aria-label="Select household eligibility decision"><button class="decision-button eligible" data-decision="eligible"><span class="decision-check">✓</span> Eligible</button><button class="decision-button not-eligible" data-decision="not-eligible"><span class="decision-cross">×</span> Not eligible</button></div><input class="override-reason hidden" id="override-reason" type="text" maxlength="120" placeholder="Why are you overriding Cashy?" aria-label="Reason for override" /><button class="record-button" id="record-decision" disabled>Record decision <span>→</span></button></div>
@@ -106,7 +113,7 @@
         <section class="view-panel history-view hidden" id="history-view">
           <div class="page-heading"><div><div class="eyebrow">CASEWORKER WORKSPACE <span class="eyebrow-line"></span> DECISION RECORD</div><h1>Decision history</h1><p class="page-subtitle">A trace of your decisions and where they differ from Cashy’s estimate.</p></div><button class="outline-button" id="back-to-review"><span>← Back to case review</span></button></div>
           <div class="history-summary" id="history-summary"></div>
-          <section class="panel history-panel"><div class="panel-header"><div><h3>Recorded decisions</h3><span class="panel-hint">Demo entries are local to this browser session.</span></div><span class="history-live"><span></span> LIVE LOG</span></div><div class="history-table-wrap"><table><thead><tr><th>HOUSEHOLD</th><th>CASHY ESTIMATE</th><th>YOUR DECISION</th><th>RESULT</th><th>TIME</th></tr></thead><tbody id="history-rows"></tbody></table><div class="empty-history" id="empty-history"><div>◷</div><strong>No decisions recorded yet</strong><p>Choose a household and record a decision to build the audit trail.</p><button class="text-button" id="start-review">Start a case review →</button></div></div></section>
+          <section class="panel history-panel"><div class="panel-header"><div><h3>Recorded decisions</h3><span class="panel-hint">Demo entries are local to this browser session.</span></div><span class="history-live"><span></span> LIVE LOG</span></div><div class="history-table-wrap"><table><thead><tr><th>HOUSEHOLD</th><th>CASHY ESTIMATE</th><th>YOUR DECISION</th><th>RESULT</th><th>DATE / TIME</th></tr></thead><tbody id="history-rows"></tbody></table><div class="empty-history" id="empty-history"><div>◷</div><strong>No decisions recorded yet</strong><p>Choose a household and record a decision to build the audit trail.</p><button class="text-button" id="start-review">Start a case review →</button></div></div></section>
           <div class="history-footnote"><span>ⓘ</span><p>An override is recorded when your decision differs from the probability-based audit category (above 50% = eligible; 50% or below = not eligible). This threshold is a demo convention. “Correctness” requires a named reference determination and cannot be established from this demo alone.</p></div>
           <footer class="page-footer"><span>Cashy Oversight Challenge <i>·</i> Prototype</span><span>All data shown is synthetic</span></footer>
         </section>
@@ -116,6 +123,7 @@
     <div class="modal-backdrop hidden" id="notes-modal" role="dialog" aria-modal="true" aria-labelledby="notes-title">
       <div class="notes-modal"><div class="modal-top"><div><span class="eyebrow">INTERVIEWER DRAFT <span class="eyebrow-line"></span> FICTIONAL</span><h2 id="notes-title">Interview key moments</h2></div><button class="close-modal" id="close-notes" aria-label="Close">×</button></div><p class="modal-intro">Illustrative transcript excerpts from a fictional interview. No real recording is included.</p><div class="video-frame" role="img" aria-label="Placeholder for a fictional interview video; no recording attached"><div class="video-silhouette"><span class="silhouette-head"></span><span class="silhouette-body"></span></div><span class="video-badge">SIMULATED VIDEO PREVIEW</span><span class="video-overlay-icon">▶</span><div class="video-bottom"><span>NO RECORDING ATTACHED</span><span>00:00 <i>/</i> 02:18</span></div></div><div class="transcript-list" id="transcript-list"></div><div class="modal-footer"><span>Notes are supporting context, not a model decision.</span><button class="modal-done" id="done-notes">Done</button></div></div>
     </div>
+    <script src="data/demo-cases.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
