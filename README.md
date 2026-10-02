@@ -14,4 +14,21 @@ It is also present a link to access the interview data, when the caseworker sens
 
 On the bottom a box let the human takes the decision, to grant or not the cash assistence to the household. 
 
-The K_Mazzu_alg.pynb contains all the coding that we have done to simulate the pipeline. In particular we used the AutoGluon 
+## The simulations
+
+The K_Mazzu_alg.pynb contains all the coding that we have done to simulate the pipeline. In particular we used the AutoGluon model, imported from the namesake library of python. That is the same model used in the real Cashy model, used in the experiment reported in the Hackhaton documentation. 
+
+The dataset is not used in its entirety, but we sample 70% of it, on which we obtain both the test and train dataset. This choice was made so that it would be possible to apply re-sampling techniques, even if we didn't manage to do it. 
+
+Once the model is trained, we focus on the variables: autogluon's predictor class has a feature_importance method that allows us to look inside the model to see which features play a significant role in the classification. 
+The test dataset is only used to be sure that our model is performing well at reproducing the operators' classification. However, the focus here does not lie in the classification capabilities of the model, on the contrary we are only interested in extracting key features. 
+
+Ultimately, we use shap library that connects directly to autogluon objects in order to open and explain the model, when fed a new data. Hence, without looking or analysing the ultimate classification probability, this last tool allows us to look at the determining variables of a specific household. We plot some example. 
+
+
+## The written production
+
+Lastly, in the repo we uploaded the two-pages note, in which we expand the idea of our approach and the presentation, both written in latek. 
+
+
+
